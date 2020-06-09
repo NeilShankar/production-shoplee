@@ -82,6 +82,22 @@ app.prepare().then(() => {
 
   server.keys = [SHOPIFY_API_SECRET_KEY]; 
 
+  function checkOriginAgainstWhitelist(ctx) {
+    const requestOrigin = ctx.accept.headers.origin || process.env.HOST;
+    require('./models/store')
+    const storeModel = mongoose.model('Store')
+    
+    storeModel.findOne({'url': requestOrigin}, function(err, resad){
+      console.log('Valid Origin Point.');
+      if (!resad) {
+        storeModel.findOne({ 'domain': requestOrigin })
+      }
+    });    
+    return requestOrigin;
+  }
+  
+  server.use(cors({ origin: checkOriginAgainstWhitelist }));
+
   server.use(
     createShopifyAuth({
       apiKey: SHOPIFY_API_KEY,
@@ -516,22 +532,7 @@ app.prepare().then(() => {
     ctx.respond = false;
     ctx.res.statusCode = 200;
   })
-
-  function checkOriginAgainstWhitelist(ctx) {
-    const requestOrigin = ctx.accept.headers.origin || process.env.HOST;
-    require('./models/store')
-    const storeModel = mongoose.model('Store')
-    
-    storeModel.findOne({'url': requestOrigin}, function(err, resad){
-      console.log('Valid Origin Point.');
-      if (!resad) {
-        storeModel.findOne({ 'domain': requestOrigin })
-      }
-    });    
-    return requestOrigin;
-  }
   
-  server.use(cors({ origin: checkOriginAgainstWhitelist }));
   server.use(router.allowedMethods());
   server.use(router.routes());
 
