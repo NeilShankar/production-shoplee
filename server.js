@@ -106,6 +106,10 @@ app.prepare().then(() => {
 
   server.use(cors(corsOptions));
 
+  routes.get('/loaderio-59c43bca002b62c37eafbcadee288849', ctx => {
+    ctx.body = "loaderio-59c43bca002b62c37eafbcadee288849"
+  })
+
   server.use(
     createShopifyAuth({
       apiKey: SHOPIFY_API_KEY,
