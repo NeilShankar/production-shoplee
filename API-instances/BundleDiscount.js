@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const BundleDiscount = axios.create({
-  baseURL: `https://bundles-shoplee.herokuapp.com/api/discountBundle`
+  baseURL: `${process.env.HOST}/api/discountBundle`
 })
 
 export default BundleDiscount

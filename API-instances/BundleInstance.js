@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const BundleInstance = axios.create({
-  baseURL: `https://bundles-shoplee.herokuapp.com/api/saveBundleInfo`
+  baseURL: `${process.env.HOST}/api/saveBundleInfo`
 })
 
 export default BundleInstance

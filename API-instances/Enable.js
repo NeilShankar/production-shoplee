@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const BundleEnable = axios.create({
-  baseURL: `https://bundles-shoplee.herokuapp.com/api/bundlesEnabled`
+  baseURL: `${process.env.HOST}/api/bundlesEnabled`
 })
 
 export default BundleEnable

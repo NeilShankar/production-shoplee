@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const GetStoreInfo = axios.create({
-  baseURL: `https://bundles-shoplee.herokuapp.com/api/getStoreInfo`
+  baseURL: `${process.env.HOST}/api/getStoreInfo`
 })
 
 export default GetStoreInfo

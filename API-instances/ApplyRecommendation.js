@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const ApplyRecommendation = axios.create({
-  baseURL: `https://bundles-shoplee.herokuapp.com/api/applyRecommendation`
+  baseURL: `${process.env.HOST}/api/applyRecommendation`
 })
 
 export default ApplyRecommendation
