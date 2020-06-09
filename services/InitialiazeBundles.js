@@ -204,11 +204,11 @@ const InitializeBundles = async (ctx) => {
 
     async function requestProductFromType(prod) {
             const ProductType = await fetch(`https://${shopURL}/admin/api/2020-04/products/${prod}.json?fields=product_type`, {
-            method: 'GET',
-            headers: {
-            'Content-Type': 'application/json',
-            "X-Shopify-Access-Token": aToken,
-            }
+                method: 'GET',
+                headers: {
+                'Content-Type': 'application/json',
+                "X-Shopify-Access-Token": aToken,
+                }
             })
     
             const JsonPT = await ProductType.json();
@@ -386,8 +386,9 @@ function FindBundles() {
         Total = sourceArray.length
         get(i).then((log) => {
             if (Array.isArray(log.collects) && log.collects.length) {
-                getBundleFromCollection(log.collects[0].collection_id, i).then((res) => {
+                getBundleFromCollection(log.collects[0].collection_id, i).then(async (res) => {
                     if (typeof res === "undefined") {
+                        await sleep(2000)
                         return;
                     } else {
                         TotalBundledArray.push(res)
@@ -399,14 +400,16 @@ function FindBundles() {
                     }                    
                 }).catch((e) => {
                     if (e) {
+                        await sleep(2000)
                         return;
                     }
                 }).finally(function() {
                     Opertions()
                 }) 
             } else if (Array.isArray(log.collects) && !log.collects.length) {
-                getBundleFromType(i).then((res) => {
+                getBundleFromType(i).then(async (res) => {
                     if (typeof res === "undefined") {
+                        await sleep(2000)
                         return;
                     } else {
                         TotalBundledArray.push(res)
@@ -417,6 +420,7 @@ function FindBundles() {
                     }   
                 }).catch((e) => {
                     if (e) {
+                        await sleep(2000)
                         return;
                     }
                 }).finally(function() {
