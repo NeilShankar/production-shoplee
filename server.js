@@ -132,6 +132,13 @@ function start() {
   
       ctx.body = await getStoreData()
     })
+
+    const Agenda = require('agenda');
+  
+    const agenda = new Agenda({
+        db: {address: process.env.MONGO_DB_URL, collection: 'Jobs'},
+        processEvery: '30 seconds'
+    });
   
     server.use(
       createShopifyAuth({
@@ -461,14 +468,6 @@ function start() {
   
     db.once("open", function() {
       console.log("Connection To MongoDB Atlas Successful!");
-    });
-  
-    
-    const Agenda = require('agenda');
-  
-    const agenda = new Agenda({
-        db: {address: process.env.MONGO_DB_URL, collection: 'Jobs'},
-        processEvery: '30 seconds'
     });
   
     // Webhooks
