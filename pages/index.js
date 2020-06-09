@@ -275,7 +275,7 @@ export default function Dashboard() {
   async function checkBundlesInitialised() {
     if (firstTime === true) {
       console.log("Checking.")
-      axios.get(`${process.env.REACT_APP_HOST}/api/checkFirstTime`)
+      axios.get(`https://bundles-shoplee.herokuapp.com/api/checkFirstTime`)
       .then((res) => {
         if (res.data === true) {
           setFirstTime(true)
