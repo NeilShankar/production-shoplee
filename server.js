@@ -82,94 +82,6 @@ app.prepare().then(() => {
 
   server.keys = [SHOPIFY_API_SECRET_KEY]; 
 
-  router.get('/dashboard', async (ctx) => {
-    await app.render(ctx.req, ctx.res, '/', ctx.query)
-    ctx.respond = false
-  })
-
-  router.get('/bundles', async (ctx) => {
-    await app.render(ctx.req, ctx.res, '/bundles', ctx.query)
-    ctx.respond = false
-  })
-
-  router.get('/bundle-configuration', async (ctx) => {
-    await app.render(ctx.req, ctx.res, '/bundle-configuration', ctx.query)
-    ctx.respond = false
-  })
-
-  router
-  .get('/api', ctx => {
-    ctx.res.statusCode = 200;  
-    ctx.body = "> Shop Lee API is up and running"
-  })
-  .post('/api/saveBundleInfo', updateBundleInfo)
-  .get('/api/getBundleInfo', getBundleInfo)
-  .get('/api/getProducts', getProducts)
-  .get('/api/allProducts', GetAllProduct)
-  .get('/api/checkFirstTime', checkFirstTime)
-  .get('/api/resetProducts', ResetProducts)
-  .get('/api/checkUpdatesEnable', EnabledUpdating)
-  .get('/api/getStoreInfo', getStoreInfo)
-  .get('/api/getAllBundles', getAllBundles)
-  .post('/api/bundlesEnabled', EnabledBundles)
-  .get('/api/enabledCheck', CheckEnabled)
-  .get('/api/test', UpdateRecommendedProducts)
-  .get('/api/applyAllNewRecommendation', ApplyAllNewRecommendation)
-  .get('/api/applyAllRecommendation', ApplyAllRecommendation)
-  .post('/api/updatesEnable', EnableUpdater)
-  .post('/api/selectProduct', SelectProduct)
-  .post('/api/applyRecommendation', ApplyRecommendation)
-  .post('/api/applyNewRecommendation', ApplyNewRecommendation)
-  .post('/api/discountBundle', DiscountBundle)
-  .post('/api/discountBundleAll', DiscountAllBundle)
-  .get('/api/getMetrics', getMetrics)
-  .get('/api/currentShop', ctx => {
-    ctx.body = ctx.session.shop
-  })
-
-  router
-  .get('/post-product/:id', postFrequentProduct)
-  .post('/generate-discount/:id', generateDiscount)
-
-  router.post('/api/conversions', async (ctx) => {
-    require('./models/store')
-    const storeModel = mongoose.model('Store')
-
-    const store = await storeModel.findOne({ url: `https://${ctx.session.shop}` })
-
-    const increaseSales = await store.Metrics.ThisMonth.Sales + ctx.request.body.sale
-    const storeUpdate = await storeModel.findOneAndUpdate({ url: `https://${ctx.session.shop}` }, {$set: {"Metrics.ThisMonth.Sales": increaseSales}})
-
-    ctx.body = "Hello."
-  })
-
-  // Scripts.
-  router
-  .get('/scripts/cart-snippet.js', cartSnippet)
-
-  // Sentry
-  Sentry.init({ dsn: 'https://4fd23a47916849a1abc8c822cb6d598f@o397020.ingest.sentry.io/5251173' });
-
-  // MongoDB Configurations 
-  const mongoose = require('mongoose')
-  mongoose.connect(`${process.env.MONGO_DB_URL}`, {useNewUrlParser: true,  useUnifiedTopology: true, useFindAndModify: false });
-
-  var db = mongoose.connection;
-
-  db.on("error", console.error.bind(console, "connection error:"));
-
-  db.once("open", function() {
-    console.log("Connection To MongoDB Atlas Successful!");
-  });
-
-  
-  const Agenda = require('agenda');
-
-  const agenda = new Agenda({
-      db: {address: process.env.MONGO_DB_URL, collection: 'Jobs'},
-      processEvery: '30 seconds'
-  });
-
   server.use(
     createShopifyAuth({
       apiKey: SHOPIFY_API_KEY,
@@ -402,6 +314,94 @@ app.prepare().then(() => {
       }
     })
   );
+
+  router.get('/dashboard', async (ctx) => {
+    await app.render(ctx.req, ctx.res, '/', ctx.query)
+    ctx.respond = false
+  })
+
+  router.get('/bundles', async (ctx) => {
+    await app.render(ctx.req, ctx.res, '/bundles', ctx.query)
+    ctx.respond = false
+  })
+
+  router.get('/bundle-configuration', async (ctx) => {
+    await app.render(ctx.req, ctx.res, '/bundle-configuration', ctx.query)
+    ctx.respond = false
+  })
+
+  router
+  .get('/api', ctx => {
+    ctx.res.statusCode = 200;  
+    ctx.body = "> Shop Lee API is up and running"
+  })
+  .post('/api/saveBundleInfo', updateBundleInfo)
+  .get('/api/getBundleInfo', getBundleInfo)
+  .get('/api/getProducts', getProducts)
+  .get('/api/allProducts', GetAllProduct)
+  .get('/api/checkFirstTime', checkFirstTime)
+  .get('/api/resetProducts', ResetProducts)
+  .get('/api/checkUpdatesEnable', EnabledUpdating)
+  .get('/api/getStoreInfo', getStoreInfo)
+  .get('/api/getAllBundles', getAllBundles)
+  .post('/api/bundlesEnabled', EnabledBundles)
+  .get('/api/enabledCheck', CheckEnabled)
+  .get('/api/test', UpdateRecommendedProducts)
+  .get('/api/applyAllNewRecommendation', ApplyAllNewRecommendation)
+  .get('/api/applyAllRecommendation', ApplyAllRecommendation)
+  .post('/api/updatesEnable', EnableUpdater)
+  .post('/api/selectProduct', SelectProduct)
+  .post('/api/applyRecommendation', ApplyRecommendation)
+  .post('/api/applyNewRecommendation', ApplyNewRecommendation)
+  .post('/api/discountBundle', DiscountBundle)
+  .post('/api/discountBundleAll', DiscountAllBundle)
+  .get('/api/getMetrics', getMetrics)
+  .get('/api/currentShop', ctx => {
+    ctx.body = ctx.session.shop
+  })
+
+  router
+  .get('/post-product/:id', postFrequentProduct)
+  .post('/generate-discount/:id', generateDiscount)
+
+  router.post('/api/conversions', async (ctx) => {
+    require('./models/store')
+    const storeModel = mongoose.model('Store')
+
+    const store = await storeModel.findOne({ url: `https://${ctx.session.shop}` })
+
+    const increaseSales = await store.Metrics.ThisMonth.Sales + ctx.request.body.sale
+    const storeUpdate = await storeModel.findOneAndUpdate({ url: `https://${ctx.session.shop}` }, {$set: {"Metrics.ThisMonth.Sales": increaseSales}})
+
+    ctx.body = "Hello."
+  })
+
+  // Scripts.
+  router
+  .get('/scripts/cart-snippet.js', cartSnippet)
+
+  // Sentry
+  Sentry.init({ dsn: 'https://4fd23a47916849a1abc8c822cb6d598f@o397020.ingest.sentry.io/5251173' });
+
+  // MongoDB Configurations 
+  const mongoose = require('mongoose')
+  mongoose.connect(`${process.env.MONGO_DB_URL}`, {useNewUrlParser: true,  useUnifiedTopology: true, useFindAndModify: false });
+
+  var db = mongoose.connection;
+
+  db.on("error", console.error.bind(console, "connection error:"));
+
+  db.once("open", function() {
+    console.log("Connection To MongoDB Atlas Successful!");
+  });
+
+  
+  const Agenda = require('agenda');
+
+  const agenda = new Agenda({
+      db: {address: process.env.MONGO_DB_URL, collection: 'Jobs'},
+      processEvery: '30 seconds'
+  });
 
   // Webhooks
 
