@@ -110,6 +110,19 @@ app.prepare().then(() => {
     ctx.body = "loaderio-59c43bca002b62c37eafbcadee288849"
   })
 
+  router.get('/load-test', async (ctx) => {
+    require('./models/store')
+    const storeModel = mongoose.model('Store')
+
+    async function getStoreData() {
+      const store = await storeModel.findOne({ url: `https://test-nsn.myshopify.com` })
+
+      return store
+    }
+
+    ctx.body = await getStoreData()
+  })
+
   server.use(
     createShopifyAuth({
       apiKey: SHOPIFY_API_KEY,
