@@ -100,7 +100,11 @@ app.prepare().then(() => {
     return requestOrigin;
   }
   
-  server.use(cors({ origin: checkOriginAgainstWhitelist }));
+  var corsOptions = {
+    origin: '*'
+  };
+
+  server.use(cors(corsOptions));
 
   server.use(
     createShopifyAuth({
