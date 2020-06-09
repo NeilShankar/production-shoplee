@@ -650,12 +650,9 @@ export default function FrequentlyBought() {
         </List>
       </Drawer>
       <main className={classes.content}>
-        <div className={classes.toolbar} />       
-        <Typography variant="h5">
-            Privacy Policy
-        </Typography>  
+        <div className={classes.toolbar} />
         <Grid container>
-            <Paper elevation={15}>
+            <Paper elevation={15} style={{ padding: "1.5em" }}>
                 <h2>Privacy Policy</h2>
                 <p>Your privacy is important to us. It is Shoplee Bundles' policy to respect your privacy regarding any information we may collect from you across our website, <a href="https://bundles-shoplee-shopify.herokuapp.com">https://bundles-shoplee-shopify.herokuapp.com</a>, and other sites we own and operate.</p>
                 <p>We only ask for personal information when we truly need it to provide a service to you. We collect it by fair and lawful means, with your knowledge and consent. We also let you know why we’re collecting it and how it will be used.</p>
@@ -667,6 +664,7 @@ export default function FrequentlyBought() {
                 <p>This policy is effective as of 9 June 2020.</p>
             </Paper>
         </Grid>
+        <br></br><Divider /><br></br>
         <Grid container>
           <Paper elevation={20} style={{"padding":"2em","textAlign":"center","margin":"0 17%"}}>
             <Typography variant="h5">Support Our App On Shopify App Store!</Typography>
