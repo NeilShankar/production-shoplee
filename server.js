@@ -90,7 +90,11 @@ app.prepare().then(() => {
     storeModel.findOne({'url': requestOrigin}, function(err, resad){
       console.log('Valid Origin Point.');
       if (!resad) {
-        storeModel.findOne({ 'domain': requestOrigin })
+        storeModel.findOne({ 'domain': requestOrigin }, function(err, res) {
+          if (!res) {
+            requestOrigin = process.env.HOST
+          }
+        })
       }
     });    
     return requestOrigin;
