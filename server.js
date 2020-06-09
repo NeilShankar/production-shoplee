@@ -311,7 +311,24 @@ function start() {
           
           (async function() {
             await agenda.start()
-            await agenda.every('1440 minutes', 'update products', {shopData: `${shop}`, upJobId: `updaterFor${shop}`}, { skipImmediate: true }, { timezone: "UTC"});
+            await agenda.every('0 0 * * *', 'update products', {shopData: `${shop}`, upJobId: `updaterFor${shop}`}, { skipImmediate: true }, { timezone: "UTC"});
+          })();
+
+          agenda.define('update sales', {priority: 'medium'}, async job => {
+            const {shopData, upJobId} = job.attrs.data
+            job.unique({ 'data.id': `salesFor${shop}` });
+            const storeFirst = await storeModel.findOne({ url: `https://${shopData}` })
+            const storeM = await storeModel.findOneAndUpdate({ url: `https://${shopData}` }, {$set: { "Metrics.ThisMonth": {
+              "Sales": 0,
+              "AddToCarts": 0,
+              "Views": 0,
+              "Currency": storeFirst.Metrics.ThisMonth.Currency 
+            } }})
+          });
+          
+          (async function() {
+            await agenda.start()
+            await agenda.every('0 0 1 * *', 'update sales', {shopData: `${shop}`, upJobId: `salesFor${shop}`}, { skipImmediate: true }, { timezone: "UTC"});
           })();
   
           var ScriptData = JSON.stringify({
