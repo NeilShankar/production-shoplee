@@ -8,7 +8,7 @@ const HostUrl = JSON.stringify(process.env.HOST)
 
 module.exports = withCSS(withSass({ 
   webpack: (config) => {
-    const env = { API_KEY: apiKey, 'process.env.HOST': HostUrl, 'process.env.REACT_APP_HOST': HostUrl};
+    const env = { API_KEY: apiKey };
     config.plugins.push(new webpack.DefinePlugin(env));
 
     config.module.rules.push({

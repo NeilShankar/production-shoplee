@@ -82,6 +82,21 @@ app.prepare().then(() => {
 
   server.keys = [SHOPIFY_API_SECRET_KEY]; 
 
+  router.get('/dashboard', async (ctx) => {
+    await app.render(ctx.req, ctx.res, '/', ctx.query)
+    ctx.respond = false
+  })
+
+  router.get('/bundles', async (ctx) => {
+    await app.render(ctx.req, ctx.res, '/bundles', ctx.query)
+    ctx.respond = false
+  })
+
+  router.get('/bundle-configuration', async (ctx) => {
+    await app.render(ctx.req, ctx.res, '/bundle-configuration', ctx.query)
+    ctx.respond = false
+  })
+
   router
   .get('/api', ctx => {
     ctx.res.statusCode = 200;  
