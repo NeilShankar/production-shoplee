@@ -387,7 +387,7 @@ function FindBundles() {
             if (Array.isArray(log.collects) && log.collects.length) {
                 getBundleFromCollection(log.collects[0].collection_id, i).then(async (res) => {
                     if (typeof res === "undefined") {
-                        await sleep(2000)
+                        await sleep(500)
                         return;
                     } else {
                         TotalBundledArray.push(res)
@@ -399,7 +399,7 @@ function FindBundles() {
                     }                    
                 }).catch(async (e) => {
                     if (e) {
-                        await sleep(2000)
+                        await sleep(500)
                         return;
                     }
                 }).finally(function() {
@@ -408,7 +408,7 @@ function FindBundles() {
             } else if (Array.isArray(log.collects) && !log.collects.length) {
                 getBundleFromType(i).then(async (res) => {
                     if (typeof res === "undefined") {
-                        await sleep(2000)
+                        await sleep(500)
                         return;
                     } else {
                         TotalBundledArray.push(res)
@@ -419,7 +419,7 @@ function FindBundles() {
                     }   
                 }).catch(async (e) => {
                     if (e) {
-                        await sleep(2000)
+                        await sleep(500)
                         return;
                     }
                 }).finally(function() {
