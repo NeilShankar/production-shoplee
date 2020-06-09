@@ -458,7 +458,7 @@ app.prepare().then(() => {
         }
       }
   })
-  .post('/webhooks/shop/redact', webhook, (ctx) => {
+  .post('/webhooks/shop/redact', webhook, async (ctx) => {
     ctx.res.statusCode = 200;
     const payload = ctx.state.webhook.payload
 
