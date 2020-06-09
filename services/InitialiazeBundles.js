@@ -398,7 +398,7 @@ function FindBundles() {
                          sourceArray.splice(index, 1);
                         }
                     }                    
-                }).catch((e) => {
+                }).catch(async (e) => {
                     if (e) {
                         await sleep(2000)
                         return;
@@ -418,7 +418,7 @@ function FindBundles() {
                          sourceArray.splice(index, 1);
                         }
                     }   
-                }).catch((e) => {
+                }).catch(async (e) => {
                     if (e) {
                         await sleep(2000)
                         return;
