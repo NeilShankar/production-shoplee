@@ -530,10 +530,10 @@ app.prepare().then(() => {
     });    
     return requestOrigin;
   }
-
+  
+  server.use(cors({ origin: checkOriginAgainstWhitelist }));
   server.use(router.allowedMethods());
   server.use(router.routes());
-  server.use(cors({ origin: checkOriginAgainstWhitelist }));
 
   server.listen(port, () => {
     console.log(`> Ready on http://localhost:${port}`);
