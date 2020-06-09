@@ -95,7 +95,8 @@
     "sass": "^1.26.5",
     "stopcock": "^1.1.0",
     "store-js": "^2.0.4",
-    "style-it": "^2.1.4"
+    "style-it": "^2.1.4",
+    "throng": "^4.0.0"
   },
   "devDependencies": {
     "eslint": "^5.16.0",
