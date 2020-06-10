@@ -116,8 +116,8 @@ function start() {
   
     server.use(cors(corsOptions));
   
-    router.get('/loaderio-59c43bca002b62c37eafbcadee288849', ctx => {
-      ctx.body = "loaderio-59c43bca002b62c37eafbcadee288849"
+    router.get('/loaderio-a469609e66b2b2365980f945fab11300', ctx => {
+      ctx.body = "loaderio-a469609e66b2b2365980f945fab11300"
     })
   
     router.get('/load-test', async (ctx) => {
@@ -415,6 +415,7 @@ function start() {
     .get('/api/getProducts', getProducts)
     .get('/api/allProducts', GetAllProduct)
     .get('/api/checkFirstTime', checkFirstTime)
+    .get('/api/InitBundles', InitializeBundles)
     .get('/api/resetProducts', ResetProducts)
     .get('/api/checkUpdatesEnable', EnabledUpdating)
     .get('/api/getStoreInfo', getStoreInfo)
