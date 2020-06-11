@@ -36,15 +36,19 @@ const generateDiscount = async (ctx) => {
         let DiscountPercent = Math.round((Difference / TotalPriceSum) * 100)
 
         var sales = await store.Metrics.ThisMonth.Sales
+        var AllSales = await store.Metrics.AllTime.Sales
         var addToCarts = await store.Metrics.ThisMonth.AddToCarts
+        var AllAddToCarts = await store.Metrics.AllTime.AddToCarts
 
         var newSales = sales + DiscountedPriceSum
+        var newAllSales = AllSales + DiscountedPriceSum
+        var newAllCarts = AllAddToCarts + 1
         var newCarts = addToCarts + 1
 
         if (TotalPriceSum !== DiscountedPriceSum) {
-            const updateStoreMetrics = await storeModel.findOneAndUpdate({ domain: ctx.accept.headers.origin }, {$set: {"Metrics.ThisMonth.AddToCarts": newCarts}})
+            const updateStoreMetrics = await storeModel.findOneAndUpdate({ domain: ctx.accept.headers.origin }, {$set: {"Metrics.ThisMonth.AddToCarts": newCarts, "Metrics.AllTime.AddToCarts": newAllCarts}})
         } else {
-            const updateStoreMetrics = await storeModel.findOneAndUpdate({ domain: ctx.accept.headers.origin }, {$set: {"Metrics.ThisMonth.AddToCarts": newCarts, "Metrics.ThisMonth.Sales": newSales}})
+            const updateStoreMetrics = await storeModel.findOneAndUpdate({ domain: ctx.accept.headers.origin }, {$set: {"Metrics.ThisMonth.AddToCarts": newCarts, "Metrics.ThisMonth.Sales": newSales, "Metrics.AllTime.AddToCarts": newAllCarts, "Metrics.AllTime.Sales": newAllSales}})
         }
 
 

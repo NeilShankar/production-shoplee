@@ -4,13 +4,13 @@ const getSubscriptionUrl = async (ctx, accessToken, shop) => {
         appSubscriptionCreate(
             name: "Basic Plan"
             returnUrl: "${process.env.HOST}"
-            trialDays: 7
+            trialDays: 14
             test: true
             lineItems: [
             {
               plan: {
                 appRecurringPricingDetails: {
-                    price: { amount: 12.99, currencyCode: USD }
+                    price: { amount: 9.99, currencyCode: USD }
                 }
               }
             }

@@ -574,8 +574,10 @@ export default function FrequentlyBought() {
           open={Boolean(anchorEl)}
           onClose={handleCloseUser}
           >
-          <MenuItem onClick={handleCloseUser}>Account</MenuItem>
-          <MenuItem onClick={handleCloseUser}>Bundle Configs</MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/settings" shallow={true}>Account</Link></MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/" shallow={true}>Dashboard</Link></MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/bundle-configuration" shallow={true}>Configure</Link></MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/bundles" shallow={true}>View Bundles</Link></MenuItem>
           </Menu>
           {/* pagename */}
         </Toolbar>

@@ -320,7 +320,7 @@ const InitializeBundles = async (ctx) => {
             console.log("> Bundle Inserting To Mongo Process Exited with Error: ", err)
         });
 
-    await storeModel.findOneAndUpdate({ url: `https://${shop}` }, {$set: {"Bundles": bundleMongoArr}})
+    await storeModel.findOneAndUpdate({ url: `https://${shop}` }, {$set: {"Bundles": bundleMongoArr, "ServiceEnabled": true}})
 
     var endTime = new Date().getTime()
     var totalTime = endTime - startTime

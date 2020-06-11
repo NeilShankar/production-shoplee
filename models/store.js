@@ -31,6 +31,11 @@ const schema = new Schema({
                AddToCarts: Number,
                Views: Number,
                Currency: String
+          },
+          AllTime: {
+               Sales: Number,
+               AddToCarts: Number,
+               Views: Number,
           }
      },
      ShopInfo: {

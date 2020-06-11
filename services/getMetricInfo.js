@@ -7,67 +7,36 @@ const storeModel = mongoose.model("Store");
 require("isomorphic-fetch");
 
 const getMetrics = async (ctx) => {
-    var shopURL = `https://${ctx.session.shop}`
+   var shopURL = `https://${ctx.session.shop}`
 
-    // This Month Analysis.
-    var Sales = 0
-    var Currency = ""
-    var AddToCarts = 0
-    var Impressions = 0
-    var CurrencyCode = ""
+   async function metricsGet() {
+       const store = await storeModel.findOne({ url: `${shopURL}` })
 
-    // Last Month Analysis
-    var LMsales = 0
-    var LMcarts = 0
-    var LMviews = 0 
-    // Some UI settings.
-    var AddToCartColor = "green"
-    var ViewsColor = "green"
-    var SalesColor = "green"
+       var allReturnData = {
+            "ThisMonth": {
+                "Sales": store.Metrics.ThisMonth.Sales,
+                "AddToCarts": store.Metrics.ThisMonth.AddToCarts,
+                "Views": store.Metrics.ThisMonth.Views,
+                "Currency": store.Metrics.ThisMonth.Currency
+            },
+            "LastMonth": {
+                "Sales": store.Metrics.LastMonth.Sales,
+                "AddToCarts": store.Metrics.LastMonth.AddToCarts,
+                "Views": store.Metrics.LastMonth.Views,
+                "Currency": store.Metrics.LastMonth.Currency
+            },
+            "AllTime": {
+                "Sales": store.Metrics.AllTime.Sales,
+                "AddToCarts": store.Metrics.AllTime.AddToCarts,
+                "Views": store.Metrics.AllTime.Views
+            },
+            "Currency": await getSymbolFromCurrency(store.Metrics.ThisMonth.Currency)
+       }
 
-    storeModel.findOne({ "url": shopURL }, async (err, res) => {
-        Sales = await res.Metrics.ThisMonth.Sales
-        AddToCarts = await res.Metrics.ThisMonth.AddToCarts
-        Impressions = await res.Metrics.ThisMonth.Views
-        Currency = await res.Metrics.ThisMonth.Currency
-        LMsales = await res.Metrics.LastMonth.Sales
-        LMcarts = await res.Metrics.LastMonth.AddToCarts
-        LMviews = await res.Metrics.LastMonth.Views
-    })
+       return allReturnData
+   }
 
-    await delay(2000)
-
-    // Checking If Profit or Loss.
-    if (Sales >= LMsales) {
-        SalesColor = "#fff"
-    } else {
-        SalesColor = "#fff"
-    }
-
-    if (AddToCarts >= LMcarts) {
-        AddToCartColor = "#fff"
-    } else {
-        AddToCartColor = "#fff"
-    }
-
-    if (Impressions >= LMviews) {
-        ViewsColor = "#fff"
-    } else if (Impressions < LMviews ) {
-        ViewsColor = "#fff"
-    }
-
-    CurrencyCode = getSymbolFromCurrency(Currency)
-
-    const Payload = {
-        Sales: `${CurrencyCode}${Sales}`,
-        AddToCart: AddToCarts,
-        Views: Impressions,
-        SalesColor: SalesColor,
-        ViewsColor: ViewsColor,
-        AddToCartColor: AddToCartColor
-    }
-
-    ctx.body = JSON.parse(JSON.stringify(Payload))
+   ctx.body = await metricsGet()
 }
 
 module.exports = getMetrics

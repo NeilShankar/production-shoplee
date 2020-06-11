@@ -27,6 +27,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Jobs
 const UpdateRecommendedProducts = require('./Jobs/dailyUpdate')
+const UpdateMetricsMonthly = require('./Jobs/monthlyMetricsUpdate')
 
 // Service Handlers
 const updateBundleInfo = require('./services/updateBundleInfo')
@@ -208,16 +209,16 @@ function start() {
               },
             };
         
-            // const {
-            //   classes: {
-            //     Mail,
-            //   },
-            // } = require('@sendgrid/helpers');
+            const {
+              classes: {
+                Mail,
+              },
+            } = require('@sendgrid/helpers');
         
-            // const mail = Mail.create(msg);
-            // const body = mail.toJSON();
-            // console.log('Sending install Email.', body);
-            // await sgMail.send(msg);
+            const mail = Mail.create(msg);
+            const body = mail.toJSON();
+            console.log('Sending install Email.', body);
+            await sgMail.send(msg);
   
           storeModel.findOne({ url: `https://${shop}`}, async (err, res) => {
             if (err) {
@@ -324,13 +325,7 @@ function start() {
           agenda.define('update sales', {priority: 'medium'}, async job => {
             const {shopData, upJobId} = job.attrs.data
             job.unique({ 'data.id': `salesFor${shop}` });
-            const storeFirst = await storeModel.findOne({ url: `https://${shopData}` })
-            const storeM = await storeModel.findOneAndUpdate({ url: `https://${shopData}` }, {$set: { "Metrics.ThisMonth": {
-              "Sales": 0,
-              "AddToCarts": 0,
-              "Views": 0,
-              "Currency": storeFirst.Metrics.ThisMonth.Currency 
-            } }})
+            UpdateMetricsMonthly(shopData)
           });
           
           (async function() {
@@ -415,14 +410,12 @@ function start() {
     .get('/api/getProducts', getProducts)
     .get('/api/allProducts', GetAllProduct)
     .get('/api/checkFirstTime', checkFirstTime)
-    .get('/api/InitBundles', UpdateRecommendedProducts)
     .get('/api/resetProducts', ResetProducts)
     .get('/api/checkUpdatesEnable', EnabledUpdating)
     .get('/api/getStoreInfo', getStoreInfo)
     .get('/api/getAllBundles', getAllBundles)
     .post('/api/bundlesEnabled', EnabledBundles)
     .get('/api/enabledCheck', CheckEnabled)
-    .get('/api/test', UpdateRecommendedProducts)
     .get('/api/applyAllNewRecommendation', ApplyAllNewRecommendation)
     .get('/api/applyAllRecommendation', ApplyAllRecommendation)
     .post('/api/updatesEnable', EnableUpdater)
@@ -521,7 +514,8 @@ function start() {
         for (var i = 0; i < discountsArray.length; i++) {
           if (discountsArray[i] === order.discount_codes[0].code) {
             var newSales = storeMod.Metrics.ThisMonth.Sales + Math.trunc(parseInt(order.subtotal_price))
-            const update = await storeModel.findByIdAndUpdate(storeMod._id, {$set: {"Metrics.ThisMonth.Sales": newSales}})
+            var newAllSales = storeMod.Metrics.AllTime.Sales + Math.trunc(parseInt(order.subtotal_price))
+            const update = await storeModel.findByIdAndUpdate(storeMod._id, {$set: {"Metrics.ThisMonth.Sales": newSales, "Metrics.AllTime.Sales": newAllSales}})
             } 
           }
         }

@@ -73,7 +73,7 @@ export default function HeaderBar() {
         </Typography>
       </CardContent>
       <CardActions>
-        <Button size="small" href="/bundles">Configure App</Button> 
+        <Button size="small" href="/bundles">Configure Bundles</Button> 
         <Button size="small" href="/frequently-asked-questions">Support</Button>
       </CardActions>
     </Card>

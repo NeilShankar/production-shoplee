@@ -24,7 +24,9 @@ const postFrequentProduct = async (ctx) => {
 
     var impressions = await store.Metrics.ThisMonth.Views
     var newImpr = impressions + 1
-    const updateStoreMetrics = await storeModel.findOneAndUpdate({ url: shop }, {$set: {"Metrics.ThisMonth.Views": newImpr}})
+    var allImpressions = await store.Metrics.AllTime.Views
+    var newAllImpr = allImpressions + 1
+    const updateStoreMetrics = await storeModel.findOneAndUpdate({ url: shop }, {$set: {"Metrics.ThisMonth.Views": newImpr, "Metrics.AllTime.Views": newAllImpr}})
     
     const accessToken = await store.accessToken
 

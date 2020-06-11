@@ -255,6 +255,27 @@ export default function Dashboard() {
     store: "",
   })
 
+  const [performance, setPerformance] = React.useState({
+    ThisMonth: {
+      Sales: 0,
+      AddToCarts: 0,
+      Views: 0,
+      Currency: "USD"
+    },
+    LastMonth: {
+      Sales: 0,
+      AddToCarts: 0,
+      Views: 0,
+      Currency: "USD"
+    },
+    AllTime: {
+      Sales: 0,
+      AddToCarts: 0,
+      Views: 0,
+    },
+    Currency: "$"
+  })
+
   React.useEffect(() => {
     if (sessionStorage.getItem('firstTime') !== null) {
       if (sessionStorage.getItem('firstTime') === true) {
@@ -339,17 +360,7 @@ export default function Dashboard() {
     GetMetrics({
       method: "GET"
     }).then((res) => {
-      console.log(res.data.Sales)
-      setMetric({
-        Sales: res.data.Sales,
-        Views: res.data.Views,
-        AddToCarts: res.data.AddToCart
-      })
-      setConv({
-        SalesColor: res.data.SalesColor,
-        AddToCartsColor: res.data.AddToCartColor,
-        ViewsColor: res.data.ViewsColor
-      })
+      setPerformance(res.data)
     })
   }
 
@@ -431,8 +442,10 @@ export default function Dashboard() {
           open={Boolean(anchorEl)}
           onClose={handleCloseUser}
           >
-          <MenuItem onClick={handleCloseUser}>Account</MenuItem>
-          <MenuItem onClick={handleCloseUser}>Bundle Configs</MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/settings" shallow={true}>Account</Link></MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/" shallow={true}>Dashboard</Link></MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/bundle-configuration" shallow={true}>Configure</Link></MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/bundles" shallow={true}>View Bundles</Link></MenuItem>
           </Menu>
           {/* pagename */}
         </Toolbar>
@@ -512,7 +525,7 @@ export default function Dashboard() {
       </Drawer>
       <main className={classes.content}>
         <div className={classes.toolbar} />  
-        <Paper style={{"marginBottom":"24px","position":"relative","marginTop":"-24px","padding":"14px", display: (firstTime === false) ? 'block' : 'none' }}>
+        <Paper style={{"marginBottom":"24px","position":"relative","marginTop":"-24px","padding":"14px", display: (firstTime === false) ? 'block' : 'none', "color":"white","background":"#428ac8" }}>
           <Typography variant="h5">Welcome To ShopLee!</Typography>
           <Typography variant="caption">You are All Setup, and ready to roll! You may view the options on the left navigation, to customize the styles or configure any of your bundles! If you need any help to get started, you may leave us a message in the chat or mail us to neilshankarnath@gmail.com</Typography>
         </Paper> 
@@ -535,38 +548,44 @@ export default function Dashboard() {
           Overall Performance
         </Typography>
         <Typography variant="caption">
-          Showing Overall Performance for this Month. Options to view more will be added soon!
+          Now you can view your overall performance, divided into 3 different segments! This Data is updated every 15 Seconds.
         </Typography>
         <br></br><br></br>
-        <Grid container spacing={3}>
-        <Grid item xs>
-          <Paper elevation={20} style={{ background: conv.ViewsColor }} className={classes.paper}>
-              Impressions<br/><br/>
-              <Typography style={{ fontWeight: "bold" , color: "black" }} variant="h5">
-                  {metric.Views}
-              </Typography>           
-              <img src="https://cdn.shopify.com/s/files/1/0278/4611/5389/t/1/assets/Untitled_design_7.png?v=1591108190" style={{ float: "left", marginTop: "-6em", position: "relative" }} alt="" />
-          </Paper>
+        <Grid container spacing={1}>
+          <Grid container item xs={12} spacing={3}>
+            <Grid item xs={4}>
+              <Paper style={{ height: "80px", "font-size": "11px" }} className={classes.paper}>Last Month Views<Typography variant="h5" style={{ color: "black", fontSize: "2em", padding: "6px 0" }}>{performance.LastMonth.Views}</Typography></Paper>
+            </Grid>
+            <Grid item xs={4}>
+              <Paper style={{ height: "80px", "font-size": "11px" }} className={classes.paper}>This Month Views<Typography variant="h5" style={{ color: "green", fontSize: "2em", padding: "6px 0" }}><b>{performance.ThisMonth.Views}</b></Typography></Paper>
+            </Grid>
+            <Grid item xs={4}>
+              <Paper style={{ height: "80px", "font-size": "11px" }} className={classes.paper}>All Time Views<Typography variant="h5" style={{ color: "black", fontSize: "2em", padding: "6px 0" }}>{performance.AllTime.Views}</Typography></Paper>
+            </Grid>
+          </Grid>
+          <Grid container item xs={12} spacing={3}>
+            <Grid item xs={4}>
+              <Paper style={{ height: "80px", "font-size": "11px" }} className={classes.paper}>Last Month Add To Carts<Typography variant="h5" style={{ color: "black", fontSize: "2em", padding: "6px 0" }}>{performance.LastMonth.AddToCarts}</Typography></Paper>
+            </Grid>
+            <Grid item xs={4}>
+              <Paper style={{ height: "80px", "font-size": "11px" }} className={classes.paper}>This Month Add To Carts<Typography variant="h5" style={{ color: "green", fontSize: "2em", padding: "6px 0" }}><b>{performance.ThisMonth.AddToCarts}</b></Typography></Paper>
+            </Grid>
+            <Grid item xs={4}>
+              <Paper style={{ height: "80px", "font-size": "11px" }} className={classes.paper}>All Time Add To Carts<Typography variant="h5" style={{ color: "black", fontSize: "2em", padding: "6px 0" }}>{performance.AllTime.AddToCarts}</Typography></Paper>
+            </Grid>
+          </Grid>
+          <Grid container item xs={12} spacing={3}>
+           <Grid item xs={4}>
+              <Paper style={{ height: "80px", "font-size": "11px" }} className={classes.paper}>Last Month Sales<Typography variant="h5" style={{ color: "black", fontSize: "2em", padding: "6px 0" }}>{performance.Currency}{performance.LastMonth.Sales}</Typography></Paper>
+            </Grid>
+            <Grid item xs={4}>
+              <Paper style={{ height: "80px", "font-size": "11px" }} className={classes.paper}>This Month Sales<Typography variant="h5" style={{ color: "green", fontSize: "2em", padding: "6px 0" }}><b>{performance.Currency}{performance.ThisMonth.Sales}</b></Typography></Paper>
+            </Grid>
+            <Grid item xs={4}>
+              <Paper style={{ height: "80px", "font-size": "11px" }} className={classes.paper}>All Time Sales<Typography variant="h5" style={{ color: "black", fontSize: "2em", padding: "6px 0" }}>{performance.Currency}{performance.AllTime.Sales}</Typography></Paper>
+            </Grid>
+          </Grid>
         </Grid>
-        <Grid item xs>
-          <Paper elevation={20} style={{ background: conv.AddToCartsColor }} className={classes.paper}>
-              Add to Carts<br/><br/>
-              <Typography style={{ fontWeight: "bold" , color: "black" }} variant="h5">
-              {metric.AddToCarts}
-              </Typography>
-              <img src="https://cdn.shopify.com/s/files/1/0278/4611/5389/t/1/assets/Untitled_design_8.png" style={{ float: "left", marginTop: "-6em", position: "relative" }} alt="" />
-              </Paper>
-        </Grid>
-        <Grid item xs>
-          <Paper elevation={20} style={{ background: conv.SalesColor }} className={classes.paper}>
-              Sales Generated (Est)<br/><br/>
-              <Typography style={{ fontWeight: "bold" , color: "black" }} variant="h5">
-                {metric.Sales}
-              </Typography>
-              <img src="https://cdn.shopify.com/s/files/1/0278/4611/5389/t/1/assets/Untitled_design_9.png" style={{ float: "left", marginTop: "-6em", position: "relative" }} alt="" />
-              </Paper>
-        </Grid>
-      </Grid>
       <br></br><br></br>
         <Divider />
         <br></br><br></br>

@@ -1,3 +1,5 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
 import Router from 'next/router';
 import NProgress from 'nprogress'; //nprogress module
 import 'nprogress/nprogress.css'; //styles of nprogress
@@ -7,6 +9,7 @@ import Head from 'next/head'
 import Collapse from '@material-ui/core/Collapse';
 import { makeStyles } from '@material-ui/core/styles';
 import LinearProgress from '@material-ui/core/LinearProgress';
+
 
 //Binding events. 
 Sentry.init({dsn: "https://fc3b66bc262e49c0a4c28fae814dbf31@o397020.ingest.sentry.io/5251177"});

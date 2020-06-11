@@ -5,6 +5,7 @@ import Drawer from '@material-ui/core/Drawer';
 import AppBar from '@material-ui/core/AppBar';
 import { SketchPicker } from 'react-color';
 import Toolbar from '@material-ui/core/Toolbar';
+import Scrollbar from 'react-smooth-scrollbar';
 import List from '@material-ui/core/List';
 import Skeleton from '@material-ui/lab/Skeleton';
 import Style from 'style-it';
@@ -296,6 +297,7 @@ export default function FrequentlyBought() {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const [previewBody, setPreviewBody] = React.useState({ __html: "<div></div>" })
+  const [prevWidth, setPrevWidth] = React.useState(97)
 
   const [previewData, setPreviewData] = React.useState({ 
     title: "Frequently Bought Products",
@@ -308,6 +310,14 @@ export default function FrequentlyBought() {
     buttonHoverTextColor: "#000",
     buttonHoverBorderColor: "#000"
   })
+
+  React.useEffect(() => {
+    if (open === true) {
+      setPrevWidth(84)
+    } else {
+      setPrevWidth(97)
+    }
+  }, [open])
 
   const [loaded, setLoaded] = React.useState(false)
 
@@ -497,6 +507,12 @@ export default function FrequentlyBought() {
           border-color: ${previewData.buttonHoverBorderColor} !important;
         }
         </style>
+        <script>
+        function disableCheck() {
+          document.getElementById("productSource").checked = true
+          document.getElementById("productSelect").checked = true
+        }
+        </script>
       `})
   }
 
@@ -572,8 +588,10 @@ export default function FrequentlyBought() {
           open={Boolean(anchorEl)}
           onClose={handleCloseUser}
           >
-          <MenuItem onClick={handleCloseUser}>Account</MenuItem>
-          <MenuItem onClick={handleCloseUser}>Bundle Configs</MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/settings" shallow={true}>Account</Link></MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/" shallow={true}>Dashboard</Link></MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/bundle-configuration" shallow={true}>Configure</Link></MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/bundles" shallow={true}>View Bundles</Link></MenuItem>
           </Menu>
           {/* pagename */}
         </Toolbar>
@@ -652,7 +670,7 @@ export default function FrequentlyBought() {
       </Drawer>
       <main className={classes.content}>
         <div className={classes.toolbar} />       
-        <Paper style={{"marginBottom":"24px","position":"relative","marginTop":"-24px","padding":"14px"}}>
+        <Paper style={{"marginBottom":"24px","position":"relative","marginTop":"-24px","padding":"14px", "color":"white","background":"#428ac8"}}>
         <Typography variant="h5">Bundle Configuration Panel</Typography>
         <Typography variant="caption">This is where you may change the settings for your bundles! Like, the title of the snippet and more...</Typography>
         </Paper>  
@@ -676,7 +694,7 @@ export default function FrequentlyBought() {
         <br />
         <div>
         <Grid style={{"position":"absolute","width":"100em","right":"2%","maxWidth":"45%","height":"95em"}} item xs={5}>
-          <Paper id="live-preview" style={{"float":"right","padding":"2em","position":"sticky","width":"97%","top":"101px"}} elevation={10}>
+          <Paper id="live-preview" style={{"float":"right","padding":"2em","position":"sticky","width":`${prevWidth}%`,"top":"101px", transition: ".5s"}} elevation={10}>
             <Typography style={{ marginTop: "-22px" }} variant="h5">Live Preview</Typography>
             <Typography variant="caption">To view a working preview, you have to visit a product in your store. </Typography>
             <Divider />
