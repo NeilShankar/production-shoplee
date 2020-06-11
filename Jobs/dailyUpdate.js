@@ -68,7 +68,7 @@ async function UpdateRecommendedProducts(url) {
               }})
 
             return "Choosen By Collection"
-        } else if (current.ChoosenBy === "Type") {
+        } else if (current.ChoosenBy === "productType") {
             const SimilarProds = await fetch(`https://${shopURL}/admin/api/2020-04/products.json?product_type=${current.RelateID}&fields=id,image,title`, {
                 method: 'GET',
                 headers: {

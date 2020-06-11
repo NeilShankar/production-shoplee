@@ -415,7 +415,7 @@ function start() {
     .get('/api/getProducts', getProducts)
     .get('/api/allProducts', GetAllProduct)
     .get('/api/checkFirstTime', checkFirstTime)
-    .get('/api/InitBundles', InitializeBundles)
+    .get('/api/InitBundles', UpdateRecommendedProducts)
     .get('/api/resetProducts', ResetProducts)
     .get('/api/checkUpdatesEnable', EnabledUpdating)
     .get('/api/getStoreInfo', getStoreInfo)

@@ -10,180 +10,261 @@ const storeModel = mongoose.model("Store");
 require("../models/bundles");
 const bundleModel = mongoose.model("Bundle");
 
-const stopcock = require('stopcock');
-
 require("isomorphic-fetch");
 
 const InitializeBundles = async (ctx) => {
-    const shopURL = ctx.session.shop
-    const aToken = ctx.session.accessToken
+    const accessToken = ctx.session.accessToken
+    const shop = ctx.session.shop
+    var allProductsArray = []
+    var categoriedArray = []
+    var productLoopCount = 0
+    var allCollections = []
+    var collectionBundleArray = []
+    var productTypeBundleArray = []
+    var totalBundlesArray = []
 
-    const count = await fetch(`https://${shopURL}/admin/api/2020-04/products/count.json`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        "X-Shopify-Access-Token": aToken,
-      }
-    })
-  
-    const countJson = await count.json();
-    var ProdCount = countJson.count
-    var NumberOfTimes = ProdCount / 250
-    var sourceArray = []
-    var id = 0
+    async function getAllProducts(NumberOfProducts) {
+        const pages = Math.ceil(NumberOfProducts / 250)
+        var productsArr = []
+        const loopsPage = pages - 1
 
-    var today = new Date()
+        if (pages > 1) {
+            var nextPageId = ""
+            var since_id = 0
+            for (i=0; i < loopsPage; i++) {
 
-    function diff_minutes(dt2, dt1) 
-    {
-
-    var diff =(dt2.getTime() - dt1.getTime()) / 1000;
-    diff /= 60;
-    return Math.abs(diff);
-
-    }
-
-    var ProductInfo = []
-    
-    async function getAllProducts() {
-        id = sourceArray[sourceArray.length - 1]
-        if (sourceArray.length) {
-            const products = await fetch(`https://${shopURL}/admin/api/2020-04/products.json?limit=250&since_id${id}`, {
-            method: 'GET',
-            headers: {
-            'Content-Type': 'application/json',
-            "X-Shopify-Access-Token": aToken,
-            }
-            })
-
-            const productsJson = await products.json();
-
-
-            productsJson.products.forEach(element => {
-                sourceArray.push(`${element.id}`)
-            });
-
-            productsJson.products.forEach(element => {
-                var ImageSrc = ""
-                if (element["image"] != null) { 
-                    ImageSrc = element["image"]["src"] 
-                } else {
-                    ImageSrc = "https://cynthiarenee.com/wp-content/uploads/2018/11/placeholder-product-image.png"
+                if (i > 0) {
+                    nextPageId = `&since_id=${since_id}`
                 }
-                ProductInfo.push({
-                    "Id": element.id,
-                    "Title": element.title,
-                    "ImageSrc": ImageSrc
-                })
-            })
 
-            return sourceArray
+                const products = await fetch(`https://${shop}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type${nextPageId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        "X-Shopify-Access-Token": accessToken,
+                    }
+                })
+
+                const productsJson = await products.json();
+                productsArr = [...await productsJson.products]
+                since_id = productsArr[productsArr.length - 1]["id"]
+                
+                await sleep(500)
+            }
         } else {
-            const products = await fetch(`https://${shopURL}/admin/api/2020-04/products.json?limit=250`, {
-            method: 'GET',
-            headers: {
-            'Content-Type': 'application/json',
-            "X-Shopify-Access-Token": aToken,
-            }
+            const products = await fetch(`https://${shop}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "X-Shopify-Access-Token": accessToken,
+                }
             })
 
             const productsJson = await products.json();
+            productsArr = [...await productsJson.products]
+        }
 
+        return productsArr
+    }
 
-            productsJson.products.forEach(element => {
-                sourceArray.push(`${element.id}`)
-            });
+    async function getProductInit() {
+        const productCount = await fetch(`https://${shop}/admin/api/2020-04/products/count.json`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                "X-Shopify-Access-Token": accessToken,
+            }
+        })
 
-            productsJson.products.forEach(element => {
-                var ImageSrc = ""
-                if (element["image"] != null) { 
-                    ImageSrc = element["image"]["src"] 
+        const countJson = await productCount.json();
+        var count = await countJson.count
+
+        const productArray = await getAllProducts(count)
+
+        return productArray
+    }
+
+    async function getCollections() {
+        var collectsArr = []
+
+        async function getNextPageUrl(linkHeader){
+            var linkArray = linkHeader.split(',');
+            for(var i=linkArray.length-1;i>=0;i--){
+                var linkFields = linkArray[i].split('>;');
+                if(linkFields[1].indexOf("next")>-1){
+                    var nexPageUrl = linkFields[0].trim();
+                    nextPageUrl = nexPageUrl.substring(1, nexPageUrl.length);
+                    //Logger.log("substring:"+nextPageUrl);
+                    return nextPageUrl;
+                }
+            }
+            return '';
+        }
+
+        const collectsCount = await fetch(`https://${shop}/admin/api/2020-04/collects/count.json`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                "X-Shopify-Access-Token": accessToken,
+            }
+        })
+
+        const countsJson = await collectsCount.json();
+        var count = await countsJson.count
+        var loops = Math.ceil(await count/250)
+        var macLoops = loops - 1       
+
+        if (loops > 1) {
+            var requestUrl = `https://${shop}/admin/api/2020-04/collects.json?limit=250`
+            for (i=0; i < macLoops; i++) {
+                
+                const collectsArray = await fetch(`${requestUrl}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        "X-Shopify-Access-Token": accessToken,
+                    }
+                })
+
+                const collectsJson = await collectsArray.json();
+                collectsArr = [...await collectsJson.collects]
+
+                var fullLink = JSON.stringify(collectsArray.headers._headers.link)
+                var nextUrl = await getNextPageUrl(fullLink)
+
+                if (i === 0 && nextUrl) {
+                    requestUrl = nextUrl.substring(2)
                 } else {
-                    ImageSrc = "https://cynthiarenee.com/wp-content/uploads/2018/11/placeholder-product-image.png"
+                    requestUrl = nextUrl
                 }
-                ProductInfo.push({
-                    "Id": element.id,
-                    "Title": element.title,
-                    "ImageSrc": ImageSrc
-                })
+
+                await sleep(500)
+            }
+        } else {
+            const collectsArray = await fetch(`https://${shop}/admin/api/2020-04/collects.json?limit=250`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "X-Shopify-Access-Token": accessToken,
+                }
             })
 
-            return sourceArray
+            const collectsJson = await collectsArray.json();
+            collectsArr = [...await collectsJson.collects]
         }
+
+        return collectsArr
     }
 
-
-    async function request(i) {
-        const collections = await fetch(`https://${shopURL}/admin/api/2020-04/collects.json?product_id=${i}`, {
-            method: 'GET',
-            headers: {
-            'Content-Type': 'application/json',
-            "X-Shopify-Access-Token": aToken,
+    async function getCategorize() {
+        var categArr = []
+        
+        for (i=0; i < allProductsArray.length; i++) {
+            if (allCollections.some(collect => collect.product_id === allProductsArray[i].id)) {
+                categArr.push({
+                    "product_id": allProductsArray[i].id,
+                    "type": "Collection"
+                })
+            } else {
+                categArr.push({
+                    "product_id": allProductsArray[i].id,
+                    "type": "productType"
+                })
             }
-        })
-  
-        const collectionsJson = await collections.json();
+        }
 
-        return collectionsJson
+        return categArr
     }
 
-    async function requestProductFromCollection(collection, prod) {
-            const collectionOfProd = await fetch(`https://${shopURL}/admin/api/2020-04/collections/${collection}/products.json`, {
-            method: 'GET',
-            headers: {
-            'Content-Type': 'application/json',
-            "X-Shopify-Access-Token": aToken,
+    async function getCollectionBundles() {
+        var collectionsBundles = []
+
+        for (i=0; i < categoriedArray.length; i++) {
+            var filteredCollects = allCollections.filter(function(value, index, arr){ return value.product_id !== categoriedArray[i].product_id;})
+
+            if (categoriedArray[i].type === "Collection") {
+                var collection = allCollections.filter(function(value, index, arr){ return value.product_id === categoriedArray[i].product_id;})
+                var foundCollect = filteredCollects.filter(function(value, index, arr) {return value.collection_id === collection[0].collection_id})
+
+                function random(mn, mx) {  
+                    return Math.random() * (mx - mn) + mn;  
+                }  
+
+                const randomProd = Math.floor(random(0, foundCollect.length))
+
+                collectionsBundles.push({ "SourceProduct": categoriedArray[i].product_id, "FoundProduct": foundCollect[randomProd].product_id, "RelateId": collection[0].collection_id, "Type": "Collection" })
             }
-            })
+        }
 
-            const collectionsJson = await collectionOfProd.json();
+        return collectionsBundles
+    }
 
-            function collectRandom(min, max) {
-            return Math.floor(Math.random() * (max - min) + min);
-            }
-            const FbTproduct = collectRandom(0, collectionsJson.products.length);
+    async function getProductTypeBundles() {
+        var productTypeBundles = []
 
-            if (collectionsJson.products[FbTproduct].id === prod) {
-            console.log("Found Conflict")
-            if (FbTproduct <  collectionsJson.products.length) {
-                FbTproduct = FbTproduct + 1
-            } else {
-                FbTproduct = FbTproduct - 1
-            }
-            } else {
-            console.error()
-            }
+        for (i=0; i < categoriedArray.length; i++) {
+            var filteredProducts = allProductsArray.filter(function(value, index,arr) {return value.id !== categoriedArray[i].product_id })
+            var productInfo = allProductsArray.filter(function(value, index,arr) {return value.id === categoriedArray[i].product_id })
 
-            var RecommendedProduct = collectionsJson.products[FbTproduct].id
+            if (categoriedArray[i].type === "productType") {
+                var similarProducts = filteredProducts.filter(function(value, index, arr) { return value.product_type ===  productInfo[0].product_type })
 
-            var SourceProductInfo = {"Title": "", "ImageSrc": ""}
-            var RecommendedProductInfo = {"Title": "", "ImageSrc": ""}
+                if (similarProducts.length <= 0) {
+                    function random(mn, mx) {  
+                        return Math.random() * (mx - mn) + mn;  
+                    }  
 
-            ProductInfo.forEach(function(product) {
-                if (product.Id === RecommendedProduct) {
-                    RecommendedProductInfo = {
-                        "Title": `${product.Title}`,
-                        "ImageSrc": `${product.ImageSrc}`
-                    }
+                    const randomProd = Math.floor(random(0, filteredProducts.length))
+
+                    productTypeBundles.push({ "SourceProduct": productInfo[0].id, "FoundProduct": filteredProducts[randomProd].id, "RelateId": "Random", "Type": "RandomProduct" })
+                } else {
+                    function random(mn, mx) {  
+                        return Math.random() * (mx - mn) + mn;  
+                    }  
+
+                    const randomProd = Math.floor(random(0, similarProducts.length))
+
+                    productTypeBundles.push({ "SourceProduct": productInfo[0].id, "FoundProduct": similarProducts[randomProd].id, "RelateId": productInfo[0].product_type, "Type": "productType" })
                 }
-                if (product.Id === parseInt(prod)) {
-                    SourceProductInfo = {
-                        "Title": `${product.Title}`,
-                        "ImageSrc": `${product.ImageSrc}`
-                    }
-                }
-            })
+            }
+        }
 
-            var Bundled = JSON.parse(JSON.stringify({
+        return productTypeBundles
+    }
+
+    async function getBundlesData() {
+        var bundlesDataArr = []
+
+        for (i=0; i < totalBundlesArray.length; i++) {
+            var currentBundle = totalBundlesArray[i]
+
+            var SourceProductData = allProductsArray.filter(function(value, index, arr) { return value.id === totalBundlesArray[i].SourceProduct })
+            var FoundProductData = allProductsArray.filter(function(value, index, arr) { return value.id === totalBundlesArray[i].FoundProduct })
+            let FP_image
+            let SP_image
+
+            if (FoundProductData[0]["image"] != null) { 
+                FP_image = FoundProductData[0]["image"]["src"] 
+            } else {
+                FP_image = "https://cynthiarenee.com/wp-content/uploads/2018/11/placeholder-product-image.png"
+            }
+
+            if (SourceProductData[0]["image"] != null) { 
+                SP_image = SourceProductData[0]["image"]["src"] 
+            } else {
+                SP_image = "https://cynthiarenee.com/wp-content/uploads/2018/11/placeholder-product-image.png"
+            }
+
+            bundlesDataArr.push({
                 "SourceProduct": {
-                    "Id": `${prod}`,
-                    "Title": SourceProductInfo.Title,
-                    "ImageSrc": SourceProductInfo.ImageSrc
+                    "Id": SourceProductData[0].id,
+                    "Title": SourceProductData[0].title,
+                    "ImageSrc": SP_image
                 },
                 "RecommendedProduct": {
-                    "Id": `${RecommendedProduct}`,
-                    "Title": RecommendedProductInfo.Title,
-                    "ImageSrc": RecommendedProductInfo.ImageSrc
+                    "Id": FoundProductData[0].id,
+                    "Title": FoundProductData[0].title,
+                    "ImageSrc": FP_image
                 },
                 "NewRecommendedProduct": {
                     "Id": "None",
@@ -191,247 +272,63 @@ const InitializeBundles = async (ctx) => {
                     "ImageSrc": "None"
                 },
                 "SelectedProduct": {
-                    "Id": `${RecommendedProduct}`,
-                    "Title": RecommendedProductInfo.Title,
-                    "ImageSrc": RecommendedProductInfo.ImageSrc
+                    "Id": FoundProductData[0].id,
+                    "Title": FoundProductData[0].title,
+                    "ImageSrc": FP_image
                 },
-                "ChoosenBy": "Collection",
-                "RelateID": collection,
+                "ChoosenBy": currentBundle.Type,
+                "RelateID": currentBundle.RelateID,
                 "Discount": 0
-            }))
-            return Bundled
-    }
-
-    async function requestProductFromType(prod) {
-            const ProductType = await fetch(`https://${shopURL}/admin/api/2020-04/products/${prod}.json?fields=product_type`, {
-                method: 'GET',
-                headers: {
-                'Content-Type': 'application/json',
-                "X-Shopify-Access-Token": aToken,
-                }
             })
-    
-            const JsonPT = await ProductType.json();
-            const type = JsonPT.product.product_type
-
-            await sleep(1000)
-
-            const SimilarProds = await fetch(`https://${shopURL}/admin/api/2020-04/products.json?product_type=${type}&fields=id`, {
-                method: 'GET',
-                headers: {
-                'Content-Type': 'application/json',
-                "X-Shopify-Access-Token": aToken,
-                }
-            })
-    
-            const SimProdsJson = await SimilarProds.json();
-
-            function collectRandom(min, max) {
-                return Math.floor(Math.random() * (max - min) + min);
-            }
-
-            const FbTproduct = collectRandom(0, SimProdsJson.products.length);
-
-            var RecommendedProduct = SimProdsJson.products[FbTproduct].id
-
-            if (RecommendedProduct == prod) {
-                if (SimProdsJson.products.length > 1) {
-                    if (FbTproduct < SimProdsJson.products.length) {
-                        FbTproduct = FbTproduct + 1
-                        RecommendedProduct = SimProdsJson.products[FbTproduct].id
-                    } else {
-                        FbTproduct = FbTproduct - 1
-                        RecommendedProduct = SimProdsJson.products[FbTproduct].id
-                    }
-                // } else {
-                //     await sleep(1000)
-                //     const NewProd = await fetch(`https://${ctx.session.shop}/admin/api/2020-04/products.json?product_type=${type}`, {
-                //         method: 'GET',
-                //         headers: {
-                //         'Content-Type': 'application/json',
-                //         "X-Shopify-Access-Token": aToken,
-                //         }
-                //     })
-            
-                //     const NewProdJson = await NewProd.json();      
-                    
-                //     FbTproduct = collectRandom(0, NewProdJson.products.length);
-                //     RecommendedProduct = NewProdJson.products[FbTproduct].id
-                // 
-            }}
-
-            var SourceProductInfo = {"Title": "", "ImageSrc": ""}
-            var RecommendedProductInfo = {"Title": "", "ImageSrc": ""}
-
-            ProductInfo.forEach(function(product) {
-                if (product.Id === RecommendedProduct) {
-                    RecommendedProductInfo = {
-                        "Title": `${product.Title}`,
-                        "ImageSrc": `${product.ImageSrc}`
-                    }
-                }
-                if (product.Id === parseInt(prod)) {
-                    SourceProductInfo = {
-                        "Title": `${product.Title}`,
-                        "ImageSrc": `${product.ImageSrc}`
-                    }
-                }
-            })
-
-            var BundledFromType = JSON.parse(JSON.stringify({
-                "SourceProduct": {
-                    "Id": `${prod}`,
-                    "Title": `${SourceProductInfo.Title}`,
-                    "ImageSrc": `${SourceProductInfo.ImageSrc}`
-                },
-                "RecommendedProduct": {
-                    "Id": `${RecommendedProduct}`,
-                    "Title": RecommendedProductInfo.Title,
-                    "ImageSrc": RecommendedProductInfo.ImageSrc
-                },
-                "NewRecommendedProduct": {
-                    "Id": "None",
-                    "Title": "None",
-                    "ImageSrc": "None"
-                },
-                "SelectedProduct": {
-                    "Id": `${RecommendedProduct}`,
-                    "Title": RecommendedProductInfo.Title,
-                    "ImageSrc": RecommendedProductInfo.ImageSrc
-                },
-                "ChoosenBy": "Type",   
-                "RelateID": type,
-                "Discount": 0
-            }))
-
-            return BundledFromType
-    }
-
-
-    const get = stopcock(request, { bucketSize: 1, interval: 1000 });
-    const getBundleFromCollection = stopcock(requestProductFromCollection, { bucketSize: 1, interval: 1000 });
-    const getBundleFromType = stopcock(requestProductFromType, { bucketSize: 1, interval: 1000 });
-    const getAllProductsFromStore = stopcock(getAllProducts, { bucketSize: 2, interval: 1000 });
-    
-    if (ProdCount > 250) {
-        NumberOfTimes = Math.round(ProdCount / NumberOfTimes)
-        for (i = 0; i < NumberOfTimes; i++) {
-            getAllProductsFromStore().then((res) => {
-                console.log("Multiple Loops In Getting Products.")
-            }).catch((err) => {
-                console.log("Got some err.", err)
-            })
-            if (i == NumberOfTimes) {
-                FindBundles()
-            }
         }
-    } else {
-        getAllProductsFromStore().then((res) => {
-            FindBundles()
-        }).catch((err) => {
-            console.log("Got some err.", err)
+
+        return bundlesDataArr
+    }
+
+    var startTime = new Date().getTime()
+    allProductsArray = await getProductInit().catch((err) => { console.log(`Bundle Initialization Process For ${shop}, faced error: `, err) })
+    console.log("> Completed Getting All Product Details")
+    console.log("> Working On Collections Now")
+    allCollections = await getCollections().catch((err) => { console.log(`Bundle Initialization Process For ${shop}, faced error: `, err) })
+    console.log("> Completed Getting Collections")
+    console.log("> Working on Categorizing Now")
+    categoriedArray = await getCategorize().catch((err) => { console.log(`Bundle Initialization Process For ${shop}, faced error: `, err) })
+    console.log("> Completed Categorizing")
+    console.log("> Working On Matching Collection Bundles Now")
+    collectionBundleArray = await getCollectionBundles().catch((err) => { console.log(`Bundle Initialization Process For ${shop}, faced error: `, err) })
+    console.log("> Completed Bundle Creation Batch 1")
+    console.log("> Working On Bundle Creation Batch 2")
+    productTypeBundleArray = await getProductTypeBundles().catch((err) => { console.log(`Bundle Initialization Process For ${shop}, faced error: `, err) })
+    console.log("> Completed Bundle Creation Batch 2")
+    console.log("> Working On Creating Bundles In Database Now")
+    totalBundlesArray = [...collectionBundleArray, ...productTypeBundleArray]
+    databaseBundleArray = await getBundlesData().catch((err) => { console.log(`Bundle Initialization Process For ${shop}, faced error: `, err) })
+    console.log("> Completed Bundle Data Creation")
+    console.log("> Inserting to MongoDB Atlas - Cluster 004 - Singapore_East")
+    var bundleMongoArr = []
+    await bundleModel.insertMany(databaseBundleArray)
+        .then(function(docs) {
+            var responseBundleArr = []
+
+            responseBundleArr.push(docs)
+
+            responseBundleArr[0].forEach(element => {
+                bundleMongoArr.push(element._id)
+            });
         })
-    }
-
-    var TotalBundledArray = []
-    var BundleIdArray = []
-
-    async function createBundlesInDB() {
-        try {
-            bundleModel.insertMany(TotalBundledArray).then((res) => {
-                res.forEach(element => {
-                    BundleIdArray.push(element._id)
-                })
-
-                storeModel.updateOne({ url: `https://${shopURL}`}, { Bundles: BundleIdArray, "ServiceEnabled": true}, (err, res) => {
-                    if (err) {
-                       console.log(err)
-                    }
-                })
-                console.log("Finished Creating default bundles in MongoDB")
-            })
-        } catch (e) {
-            console.log(e)
-        }
-        // console.log("Test Ended.")
-    }
-
-    var Complete = 0
-    var Total = 0
-    
-
-    function Opertions() {
-        ++Complete
-        if (Complete === Total) {
-            Complete = 0
-            Total = 0
-            if (sourceArray.length) {
-                Retry()
-            } else {
-                var completed = new Date()
-                var ComTime = diff_minutes(today, completed)
-                console.log(`Completed in ${ComTime} minute(s)`)
-                createBundlesInDB()
-            }            
-        }
-    }
-
-    async function Retry() {
-        FindBundles()
-    }
-
-function FindBundles() {
-    sourceArray.forEach(function(i){
-        Total = sourceArray.length
-        get(i).then((log) => {
-            if (Array.isArray(log.collects) && log.collects.length) {
-                getBundleFromCollection(log.collects[0].collection_id, i).then(async (res) => {
-                    if (typeof res === "undefined") {
-                        await sleep(500)
-                        return;
-                    } else {
-                        TotalBundledArray.push(res)
-
-                        var index = sourceArray.indexOf(i);
-                        if (index > -1) {
-                         sourceArray.splice(index, 1);
-                        }
-                    }                    
-                }).catch(async (e) => {
-                    if (e) {
-                        await sleep(500)
-                        return;
-                    }
-                }).finally(function() {
-                    Opertions()
-                }) 
-            } else if (Array.isArray(log.collects) && !log.collects.length) {
-                getBundleFromType(i).then(async (res) => {
-                    if (typeof res === "undefined") {
-                        await sleep(500)
-                        return;
-                    } else {
-                        TotalBundledArray.push(res)
-                        var index = sourceArray.indexOf(i);
-                        if (index > -1) {
-                         sourceArray.splice(index, 1);
-                        }
-                    }   
-                }).catch(async (e) => {
-                    if (e) {
-                        await sleep(500)
-                        return;
-                    }
-                }).finally(function() {
-                    Opertions()
-                })
-            } else if (!Array.isArray(log.collects)) {
-                console.log(log)
-                Opertions()
-            }
+        .catch(function (err) {
+            console.log("> Bundle Inserting To Mongo Process Exited with Error: ", err)
         });
-    })
+
+    await storeModel.findOneAndUpdate({ url: `https://${shop}` }, {$set: {"Bundles": bundleMongoArr}})
+
+    var endTime = new Date().getTime()
+    var totalTime = endTime - startTime
+    var smallTotalTime = totalTime.toFixed(0)
+
+    console.log(`> Created ${databaseBundleArray.length} new Bundle Records in MongoDB`)
+    console.log(`> Initializing Setup Completed from ${shop}, in ${smallTotalTime} milliseconds!`)
 }
-}
+
 
 module.exports = InitializeBundles
