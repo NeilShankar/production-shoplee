@@ -290,7 +290,12 @@ function start() {
                     AddToCarts: 0,
                     Views: 0,
                     Currency: Currency
-                  }            
+                  },
+                  AllTime: {
+                    Sales: 0,
+                    AddToCarts: 0,
+                    Views: 0,
+                  }
                 },
                 ShopInfo: {
                   UserName: ShopUser,
