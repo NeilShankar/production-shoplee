@@ -116,6 +116,11 @@ function start() {
     };
   
     server.use(cors(corsOptions));
+
+    router.get('/privacy', async (ctx) => {
+      await app.render(ctx.req, ctx.res, '/privacy', ctx.query)
+      ctx.respond = false
+    })
   
     router.get('/loaderio-a469609e66b2b2365980f945fab11300', ctx => {
       ctx.body = "loaderio-a469609e66b2b2365980f945fab11300"
