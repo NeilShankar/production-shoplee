@@ -380,17 +380,6 @@ export default function FrequentlyBought() {
   const handleCloseUser = () => {
     setAnchorEl(null);
   };
-
-  React.useState(() => {
-    setInterval(() => {
-      if (bundles.length > 0) {
-        setDisplayProductsAvailable('none')
-      } else {
-        setDisplayProductsAvailable('block')
-      }
-    }, 1000)
-  }, [])
-
   const discountChangeSing = (Discount, Id) => {
     var updateArr = []
     bundles.forEach(element => {
@@ -685,6 +674,11 @@ export default function FrequentlyBought() {
       setBundles(arr)
       setDisplayProgress('none')
       setChecked(true)  
+      if (arr.length) {
+        setDisplayProductsAvailable('none')
+      } else {
+        setDisplayProductsAvailable('block')
+      }
     }).catch((err) => {
       if (err.response.status === 404) {
         console.log("No products Probably.")
@@ -701,6 +695,12 @@ export default function FrequentlyBought() {
         var arr = []
         arr = [...res.data]
         setBundles(arr)
+
+        if (arr.length) {
+          setDisplayProductsAvailable('none')
+        } else {
+          setDisplayProductsAvailable('block')
+        }
 
         var array = paginate(res.data, 10, 1)
         setDisplayBundles(array)
@@ -755,6 +755,12 @@ export default function FrequentlyBought() {
           var arr = []
           arr = [...res.data]
           setBundles(arr)
+
+          if (arr.length) {
+            setDisplayProductsAvailable('none')
+          } else {
+            setDisplayProductsAvailable('block')
+          }
   
           var array = paginate(res.data, 10, 1)
           setDisplayBundles(array)
