@@ -277,8 +277,8 @@ const InitializeBundles = async (ctx) => {
                     "ImageSrc": FP_image
                 },
                 "ChoosenBy": currentBundle.Type,
-                "RelateID": currentBundle.RelateID,
-                "Discount": 0
+                "RelateID": `${currentBundle.RelateId}`,
+                "Discount": 5
             })
         }
 

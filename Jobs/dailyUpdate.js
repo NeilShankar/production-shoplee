@@ -11,7 +11,7 @@ const storeModel = mongoose.model("Store");
 const stopcock = require('stopcock')
 
 async function UpdateRecommendedProducts(url) {
-    var shopURL = `${url}`
+    var shopURL = `test-nsn.myshopify.com`
 
     // First we get the StoreModel
     const store = await storeModel.findOne({ url: `https://${shopURL}` })
@@ -23,12 +23,11 @@ async function UpdateRecommendedProducts(url) {
     var bundleArr = []
 
     // Then We get the Bundles
-    const bundles = await Promise.all(store.Bundles.map(async (bundle) => {
-        await bundleModel.findById(bundle, async (err, res) => {
-            // Saved to Array
-            bundleArr.push(res)
-        })
-    }));
+    const bundles = await bundleModel.find({
+        '_id': { $in: store.Bundles }
+    }, function(err, res) {
+        bundleArr.push(res)
+    })
 
     // Find Match Function
     async function FindMatch(current) {
@@ -105,7 +104,43 @@ async function UpdateRecommendedProducts(url) {
 
             return "Choosen By Type"
         } else {
-            return "NoN"
+            const randomProd = await fetch(`https://${shopURL}/admin/api/2020-04/products.json?&fields=id,image,title`, {
+                method: 'GET',
+                headers: {
+                'Content-Type': 'application/json',
+                "X-Shopify-Access-Token": store.accessToken,
+                }
+            })
+    
+            const randomProdJson = await randomProd.json();
+
+            var filteredProducts = randomProdJson.products.filter(function(value, index,arr) {return value.id !== current.SelectedProduct.Id })
+
+            function random(mn, mx) {  
+                return Math.random() * (mx - mn) + mn; 
+            }  
+
+            const randomProdNumber = Math.floor(random(0, filteredProducts.length))
+
+            var NewRecommended = filteredProducts[randomProdNumber]
+
+            var ImageSrc = ""
+
+            if (NewRecommended["image"] != null) { 
+                ImageSrc = NewRecommended["image"]["src"] 
+            } else {
+                ImageSrc = "https://cynthiarenee.com/wp-content/uploads/2018/11/placeholder-product-image.png"
+            }
+
+            await bundleModel.findByIdAndUpdate(current._id, {$set: {
+                "NewRecommendedProduct":{
+                  "Id": NewRecommended.id,
+                  "Title": NewRecommended.title,
+                  "ImageSrc": ImageSrc
+                }                 
+            }})
+
+            return "Choosen Randomly."
         }
     }
 
@@ -117,7 +152,7 @@ async function UpdateRecommendedProducts(url) {
     // Main Function
     function bundleMatch() {
         console.log("Started Daily Updater")
-        bundleArr.forEach(element => {
+        bundleArr[0].forEach(element => {
             findBundlesMatching(element).then((res) => {
                 console.log(res)
             }).catch((e) => {

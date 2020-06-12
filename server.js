@@ -376,7 +376,31 @@ function start() {
             accessToken,
             shop,
             apiVersion: ApiVersion.April20
-          });   
+          });  
+          
+          const productCreateHook = await registerWebhook({
+            address: `${process.env.HOST}/webhooks/app/productCreated`,
+            topic: 'PRODUCT_CREATE',
+            accessToken,
+            shop,
+            apiVersion: ApiVersion.April20
+          }); 
+          
+          const productDeleteHook = await registerWebhook({
+            address: `${process.env.HOST}/webhooks/app/productDeleted`,
+            topic: 'PRODUCT_DELETE',
+            accessToken,
+            shop,
+            apiVersion: ApiVersion.April20
+          });
+
+          const themeChanges = await registerWebhook({
+            address: `${process.env.HOST}/webhooks/app/themeChanges`,
+            topic: 'THEME_PUBLISH',
+            accessToken,
+            shop,
+            apiVersion: ApiVersion.April20
+          });
   
           if (uninstallWebhook.success) {
             console.log('Successfully registered webhook uninstall hook!');
@@ -417,6 +441,7 @@ function start() {
     })
     .post('/api/saveBundleInfo', updateBundleInfo)
     .get('/api/getBundleInfo', getBundleInfo)
+    .get('/api/updaterTest', UpdateRecommendedProducts)
     .get('/api/getProducts', getProducts)
     .get('/api/allProducts', GetAllProduct)
     .get('/api/checkFirstTime', checkFirstTime)
@@ -494,7 +519,8 @@ function start() {
     
         dynamic_template_data: {
           subject: `Oh, no! We Are Sorry To See You Go ${webhook.payload.shop_owner}!`,
-          name: `${webhook.payload.shop_owner}`
+          name: `${webhook.payload.shop_owner}`,
+          shopURL:`https://${webhook.domain}`
         },
       };
   
