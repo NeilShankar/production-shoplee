@@ -389,10 +389,28 @@ export default function FrequentlyBought() {
         setPreviewRes({ data: await res.data })
         localStorage.setItem('PreviewRes', JSON.stringify(res.data))
         setLoaded(true)
+        setInterval(() => {
+          GetProductsLive({
+            method: "GET"
+          }).then(async (res) => {
+            setPreviewRes({ data: await res.data })
+            localStorage.setItem('PreviewRes', JSON.stringify(res.data))
+            setLoaded(true)
+          })
+        }, 10000)
       })
     } else {
       setPreviewRes({ data: JSON.parse(localStorage.getItem('PreviewRes')) })
       setLoaded(true)
+      setInterval(() => {
+        GetProductsLive({
+          method: "GET"
+        }).then(async (res) => {
+          setPreviewRes({ data: await res.data })
+          localStorage.setItem('PreviewRes', JSON.stringify(res.data))
+          setLoaded(true)
+        })
+      }, 10000)
     }
   }, [])
 

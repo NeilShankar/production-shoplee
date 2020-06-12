@@ -394,6 +394,14 @@ function start() {
             apiVersion: ApiVersion.April20
           });
 
+          const productsUpdateHook = await registerWebhook({
+            address: `${process.env.HOST}/webhooks/products/update`,
+            topic: 'PRODUCTS_UPDATE',
+            accessToken,
+            shop,
+            apiVersion: ApiVersion.April20
+          });
+
           const themeChanges = await registerWebhook({
             address: `${process.env.HOST}/webhooks/themes/publish`,
             topic: 'THEMES_PUBLISH',
@@ -406,6 +414,12 @@ function start() {
             console.log('Successfully registered webhook uninstall hook!');
           } else {
             console.log('Failed to register webhook', uninstallWebhook.result);
+          }
+
+          if (productsUpdateHook.success) {
+            console.log('Successfully registered webhook - product update hook!');
+          } else {
+            console.log('Failed to register webhook', productsUpdateHook.result);
           }
 
           if (productCreateHook.success) {
@@ -521,7 +535,11 @@ function start() {
   
     const webhook = receiveWebhook({secret: SHOPIFY_API_SECRET_KEY});
   
-    router.post('/webhooks/app/uninstalled', webhook, async (ctx) => {
+    router
+    .post('/webhooks/themes/publish', webhook, async (ctx) => {
+      getThemes(`https://${ctx.state.webhook.domain}`)
+    })
+    .post('/webhooks/app/uninstalled', webhook, async (ctx) => {
       ctx.res.statusCode = 200;
       const webhook = ctx.state.webhook
   
@@ -641,7 +659,7 @@ function start() {
         }
       })
 
-      const products = await fetch(`https://${ctx.state.webhook.domain}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type`, {
+      const products = await fetch(`https://${ctx.state.webhook.domain}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type,published_at`, {
           method: 'GET',
           headers: {
               'Content-Type': 'application/json',
@@ -651,7 +669,7 @@ function start() {
 
       const productsJson = await products.json();
       var chooseFrom = await productsJson.products
-      var filteredProducts = await chooseFrom.filter(function(value, index, arr){ return value.id !== ctx.state.webhook.payload.id;})
+      var filteredProducts = await chooseFrom.filter(function(value, index, arr){ return value.published_at !== null && value.id !== ctx.state.webhook.payload.id;})
 
       function random(mn, mx) {  
         return Math.random() * (mx - mn) + mn;  
@@ -732,12 +750,10 @@ function start() {
       const bundleModel = mongoose.model("Bundle");
 
       const deletedBundle = await bundleModel.findOneAndDelete({ "SourceProduct.Id": `${payload.id}` }, function (err, res) {
-        if (err) console.log(err)
-
-        console.log("Deleted =>", res)
+        if (err) { console.log(err); ctx.response.status = 404;}
       })
 
-      const products = await fetch(`https://${ctx.state.webhook.domain}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type`, {
+      const products = await fetch(`https://${ctx.state.webhook.domain}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type,published_at`, {
           method: 'GET',
           headers: {
               'Content-Type': 'application/json',
@@ -754,7 +770,7 @@ function start() {
 
       Bundles.forEach(async element => {
         if (parseInt(element.SelectedProduct.Id) === payload.id) {
-            var filteredProds = chooseFrom.filter(function(value, index, arr) { return value.id !== element.SourceProduct.Id })
+            var filteredProds = chooseFrom.filter(function(value, index, arr) { return value.published_at !== null && value.id !== element.SourceProduct.Id })
 
             function random(mn, mx) {  
               return Math.random() * (mx - mn) + mn;  
@@ -775,6 +791,14 @@ function start() {
               "Id": choosenProd.id,
               "Title": choosenProd.title,
               "ImageSrc": SP_image
+            }, "RecommendedProduct": {
+              "Id": choosenProd.id,
+              "Title": choosenProd.title,
+              "ImageSrc": SP_image
+            }, "NewRecommendedProduct": {
+              "Id": choosenProd.id,
+              "Title": choosenProd.title,
+              "ImageSrc": SP_image
             }}})
 
             console.log(updateBundle)
@@ -783,6 +807,156 @@ function start() {
 
       ctx.response.status = 200;
     })
+    .post('/webhooks/products/update', webhook, async (ctx) => {
+      const payload = ctx.state.webhook.payload
+      const payloadId = payload.id
+  
+      require('./models/store')
+      const storeModel = mongoose.model('Store')
+
+      const store = await storeModel.findOne({ url: `https://${ctx.state.webhook.domain}` })
+  
+      require("./models/bundles");
+      const bundleModel = mongoose.model("Bundle");
+
+      var findId = payloadId.toString()
+
+      const findBundle = await bundleModel.findOne({ "SourceProduct.Id": findId }, async (err, res) => {
+        if (err) console.log(err)
+
+        if (res) {
+          if (payload.published_at === null) {
+            await bundleModel.findByIdAndDelete(res._id)
+          } else {
+            return ;
+          }
+        } else {
+          if (payload.published_at === null) {
+            return ;
+          } else {
+            const products = await fetch(`https://${ctx.state.webhook.domain}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type,published_at`, {
+              method: 'GET',
+              headers: {
+                  'Content-Type': 'application/json',
+                  "X-Shopify-Access-Token": store.accessToken,
+              }
+            })
+
+            const productsJson = await products.json();
+            var chooseFrom = await productsJson.products
+            var filteredProducts = await chooseFrom.filter(function(value, index, arr){ return value.published_at !== null && value.id !== ctx.state.webhook.payload.id })
+
+            function random(mn, mx) {  
+              return Math.random() * (mx - mn) + mn;  
+            }  
+
+            const randomProd = Math.floor(random(0, filteredProducts.length))
+
+            choosenProduct = filteredProducts[randomProd]
+            let FP_image
+            let SP_image
+
+            if (choosenProduct["image"] != null) { 
+              FP_image = choosenProduct["image"]["src"] 
+            } else {
+              FP_image = "https://cynthiarenee.com/wp-content/uploads/2018/11/placeholder-product-image.png"
+            }
+
+            if (ctx.state.webhook.payload["image"] != null) {
+              SP_image = ctx.state.webhook.payload["image"]["src"] 
+            } else {
+              SP_image = "https://cynthiarenee.com/wp-content/uploads/2018/11/placeholder-product-image.png"
+            }
+
+            var bundleInstance = new bundleModel({
+              "SourceProduct": {
+              "Id": ctx.state.webhook.payload.id,
+              "Title": ctx.state.webhook.payload.title,
+              "ImageSrc": SP_image
+              },
+              "RecommendedProduct": {
+              "Id": choosenProduct.id,
+              "Title": choosenProduct.title,
+              "ImageSrc": FP_image
+              },
+              "NewRecommendedProduct": {
+              "Id": "None",
+              "Title": "None",
+              "ImageSrc": "None"
+              },
+              "SelectedProduct": {
+              "Id": choosenProduct.id,
+              "Title": choosenProduct.title,
+              "ImageSrc": FP_image
+              },
+              "ChoosenBy": "RandomProduct",
+              "RelateID": `Random`,
+              "Discount": 5
+            })
+      
+            await bundleInstance.save(async function(err, doc) {
+              if (err) return console.error(err)
+              console.log("New Bundle Created Because of New product data --> ", doc.SourceProduct)
+      
+              await storeModel.findOneAndUpdate(
+                { _id: store._id },
+                { $push: { Bundles: doc._id }},
+                function (error, success) {
+                  if (error) {
+                      console.log(error);
+                  } else {
+                      console.log("Success.");
+                  }
+                });
+            })
+          }
+        }
+      })
+
+      if (payload.published_at === null) {
+          const prodRes = await fetch(`https://${ctx.state.webhook.domain}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type,published_at`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                "X-Shopify-Access-Token": store.accessToken,
+            }
+          })
+
+          const productsResJson = await prodRes.json();
+          var chooseFromRes = await productsResJson.products
+          var filteredResProducts = await chooseFromRes.filter(function(value, index, arr){ return value.published_at !== null && value.id !== ctx.state.webhook.payload.id;})
+
+          function random(mn, mx) {  
+            return Math.random() * (mx - mn) + mn;  
+          }  
+
+          const randomProd = Math.floor(random(0, filteredResProducts.length))
+
+          chooseProduct = filteredResProducts[randomProd]
+          let SPR_image 
+
+          if (ctx.state.webhook.payload["image"] != null) { 
+            SPR_image = ctx.state.webhook.payload["image"]["src"] 
+          } else {
+            SPR_image = "https://cynthiarenee.com/wp-content/uploads/2018/11/placeholder-product-image.png"
+          }
+
+          const findBundleSP = await bundleModel.updateMany({ "SelectedProduct.Id": findId }, { $set: { "SelectedProduct": {
+            "Id": chooseProduct.id,
+            "Title": chooseProduct.title,
+            "ImageSrc": SPR_image
+          }, "RecommendedProduct": {
+            "Id": chooseProduct.id,
+            "Title": chooseProduct.title,
+            "ImageSrc": SPR_image
+          }, "NewRecommendedProduct": {
+            "Id": chooseProduct.id,
+            "Title": chooseProduct.title,
+            "ImageSrc": SPR_image
+          }}
+        })           
+      }
+  })
     
   
     server.use(graphQLProxy({ version: ApiVersion.April20 }));

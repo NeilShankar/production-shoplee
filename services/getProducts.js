@@ -15,7 +15,7 @@ const getProducts = async (ctx) => {
     async function getLivePrevData() {
         const store = await storeModel.findOne({ url: `https://${shop}` })
 
-        const bundle = await bundleModel.findById(store.Bundles[0])
+        const bundle = await bundleModel.findById(store.Bundles[store.Bundles.length])
 
         const prodRes = await fetch(`https://${shop}/admin/api/2020-04/products.json?ids=${bundle.SourceProduct.Id},${bundle.SelectedProduct.Id}`, {
             method: 'GET',

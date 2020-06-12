@@ -368,6 +368,8 @@ export default function FrequentlyBought() {
   })
   const [loaded, setLoaded] = React.useState(false)
   const [searchTimeout, setSearchTimeout] = React.useState(0)
+  const [displayNone, setDisplayNone] = React.useState(true)
+  const [displayProductsAvailable, setDisplayProductsAvailable] = React.useState('none')
 
   const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -378,6 +380,16 @@ export default function FrequentlyBought() {
   const handleCloseUser = () => {
     setAnchorEl(null);
   };
+
+  React.useState(() => {
+    setInterval(() => {
+      if (bundles.length > 0) {
+        setDisplayProductsAvailable('none')
+      } else {
+        setDisplayProductsAvailable('block')
+      }
+    }, 1000)
+  }, [])
 
   const discountChangeSing = (Discount, Id) => {
     var updateArr = []
@@ -673,6 +685,10 @@ export default function FrequentlyBought() {
       setBundles(arr)
       setDisplayProgress('none')
       setChecked(true)  
+    }).catch((err) => {
+      if (err.response.status === 404) {
+        console.log("No products Probably.")
+      }
     })
   }
 
@@ -705,6 +721,10 @@ export default function FrequentlyBought() {
         setLoaded(true)
 
         localStorage.setItem('bundlesData', JSON.stringify(res.data))
+      }).catch((err) => {
+        if (err.response.status === 404) {
+          console.log("No products Probably.")
+        }
       })
     } else {
       var arr = JSON.parse(localStorage.getItem('bundlesData'))
@@ -728,33 +748,39 @@ export default function FrequentlyBought() {
       setChecked(true)  
       setLoaded(true)
 
-      GetAllBundles({
-        method: "GET"
-      }).then((res) => {
-        var arr = []
-        arr = [...res.data]
-        setBundles(arr)
-
-        var array = paginate(res.data, 10, 1)
-        setDisplayBundles(array)
-
-        var rounded = Math.ceil(res.data.length / 10) * 10
-        var distance = res.data.length
-        
-        var pages = rounded / 10
-
-        if (distance > rounded) {
-          pages = pages + 1
-        }
-
-        setTotalPage(pages)
-
-        setDisplayProgress('none')
-        setChecked(true)  
-        setLoaded(true)
-
-        localStorage.setItem('bundlesData', JSON.stringify(res.data))
-      })
+      setInterval(() => {
+        GetAllBundles({
+          method: "GET"
+        }).then((res) => {
+          var arr = []
+          arr = [...res.data]
+          setBundles(arr)
+  
+          var array = paginate(res.data, 10, 1)
+          setDisplayBundles(array)
+  
+          var rounded = Math.ceil(res.data.length / 10) * 10
+          var distance = res.data.length
+          
+          var pages = rounded / 10
+  
+          if (distance > rounded) {
+            pages = pages + 1
+          }
+  
+          setTotalPage(pages)
+  
+          setDisplayProgress('none')
+          setChecked(true)  
+          setLoaded(true)
+  
+          localStorage.setItem('bundlesData', JSON.stringify(res.data))
+        }).catch((err) => {
+          if (err.response.status === 404) {
+            console.log("No products Probably.")
+          }
+        })
+      }, 10000);
     }
   }, [])
 
@@ -1105,6 +1131,7 @@ export default function FrequentlyBought() {
             <InputBase
             className={classes.input}
             value={search.term}
+            disabled={((bundles.length === true) ? 'false' : 'true' )}
             onChange={handleSearch}
             placeholder="Search Any Of Your Products"
             inputProps={{ 'aria-label': 'Search Any Of Your Products' }}
@@ -1124,7 +1151,11 @@ export default function FrequentlyBought() {
               <IconButton onClick={nextPage} disabled={pageButtons.next} aria-label="Next Page">
                 <NavigateNextIcon />
               </IconButton>
-          </Grid>          
+          </Grid>
+
+          <div style={{ marginTop: "6em", textAlign: "center", display: displayProductsAvailable }}>
+            <h3>We couldn't find Any Products In Your Store, Can you please create some?</h3>
+          </div> 
 
           {DisplayBundles.map((d) =>
                 <div>

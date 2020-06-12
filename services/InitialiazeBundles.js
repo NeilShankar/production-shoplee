@@ -37,7 +37,7 @@ const InitializeBundles = async (ctx) => {
                     nextPageId = `&since_id=${since_id}`
                 }
 
-                const products = await fetch(`https://${shop}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type${nextPageId}`, {
+                const products = await fetch(`https://${shop}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type,published_scope,published_at${nextPageId}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -52,7 +52,7 @@ const InitializeBundles = async (ctx) => {
                 await sleep(500)
             }
         } else {
-            const products = await fetch(`https://${shop}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type`, {
+            const products = await fetch(`https://${shop}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type,published_scope,published_at`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -61,7 +61,17 @@ const InitializeBundles = async (ctx) => {
             })
 
             const productsJson = await products.json();
-            productsArr = [...await productsJson.products]
+            productsJson.products.forEach(element => {
+                if (element.published_scope === "web" || element.published_scope === "global") {
+                    if (element.published_at != null) {
+                        productsArr.push(element)
+                    } else {
+                        console.log(element.title, " is not published")
+                    }
+                } else {
+                    console.log(element.title, " is Not Available")
+                }
+            });
         }
 
         return productsArr

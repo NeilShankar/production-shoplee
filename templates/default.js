@@ -1,6 +1,16 @@
 require("isomorphic-fetch");
+const mongoose = require('mongoose')
+
+require("../models/store");
+const storeModel = mongoose.model("Store");
 
 const getThemes = async function getThemes(ShopURI, accessT) {
+  
+    if (!accessT) {
+      const store = await storeModel.findOne({ url: `${ShopURI}`})
+      accessT = await store.accessToken
+    }
+
     const themes = await fetch(`${ShopURI}/admin/api/2020-04/themes.json`, {
       method: "GET",
       headers: {
