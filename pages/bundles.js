@@ -14,6 +14,7 @@ import Typography from '@material-ui/core/Typography';
 import Link from 'next/link';
 import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert from '@material-ui/lab/Alert';
+import axios from 'axios'
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore';
 import SaveIcon from '@material-ui/icons/Save';
@@ -63,6 +64,7 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Slide from '@material-ui/core/Slide';
+import Router from 'next/router'
 
 import FormGroup from '@material-ui/core/FormGroup';
 import Switch from '@material-ui/core/Switch';
@@ -725,6 +727,34 @@ export default function FrequentlyBought() {
       setDisplayProgress('none')
       setChecked(true)  
       setLoaded(true)
+
+      GetAllBundles({
+        method: "GET"
+      }).then((res) => {
+        var arr = []
+        arr = [...res.data]
+        setBundles(arr)
+
+        var array = paginate(res.data, 10, 1)
+        setDisplayBundles(array)
+
+        var rounded = Math.ceil(res.data.length / 10) * 10
+        var distance = res.data.length
+        
+        var pages = rounded / 10
+
+        if (distance > rounded) {
+          pages = pages + 1
+        }
+
+        setTotalPage(pages)
+
+        setDisplayProgress('none')
+        setChecked(true)  
+        setLoaded(true)
+
+        localStorage.setItem('bundlesData', JSON.stringify(res.data))
+      })
     }
   }, [])
 

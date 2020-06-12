@@ -379,24 +379,24 @@ function start() {
           });  
           
           const productCreateHook = await registerWebhook({
-            address: `${process.env.HOST}/webhooks/app/productCreated`,
-            topic: 'PRODUCT_CREATE',
+            address: `${process.env.HOST}/webhooks/products/create`,
+            topic: 'PRODUCTS_CREATE',
             accessToken,
             shop,
             apiVersion: ApiVersion.April20
           }); 
           
           const productDeleteHook = await registerWebhook({
-            address: `${process.env.HOST}/webhooks/app/productDeleted`,
-            topic: 'PRODUCT_DELETE',
+            address: `${process.env.HOST}/webhooks/products/delete`,
+            topic: 'PRODUCTS_DELETE',
             accessToken,
             shop,
             apiVersion: ApiVersion.April20
           });
 
           const themeChanges = await registerWebhook({
-            address: `${process.env.HOST}/webhooks/app/themeChanges`,
-            topic: 'THEME_PUBLISH',
+            address: `${process.env.HOST}/webhooks/themes/publish`,
+            topic: 'THEMES_PUBLISH',
             accessToken,
             shop,
             apiVersion: ApiVersion.April20
@@ -406,6 +406,24 @@ function start() {
             console.log('Successfully registered webhook uninstall hook!');
           } else {
             console.log('Failed to register webhook', uninstallWebhook.result);
+          }
+
+          if (productCreateHook.success) {
+            console.log('Successfully registered webhook - product create hook!');
+          } else {
+            console.log('Failed to register webhook', productCreateHook.result);
+          }
+
+          if (productDeleteHook.success) {
+            console.log('Successfully registered webhook - product delete hook!');
+          } else {
+            console.log('Failed to register webhook', productDeleteHook.result);
+          }
+
+          if (themeChanges.success) {
+            console.log('Successfully registered webhook - theme change hook!');
+          } else {
+            console.log('Failed to register webhook', themeChanges.result);
           }
   
           if (orderWebhook.success) {
@@ -605,7 +623,167 @@ function start() {
       await sgMail.send(msg);
   
       ctx.body = "New Customer Data Request."
-    });
+    })
+    .post('/webhooks/products/create', webhook, async (ctx) => {
+      const payload = ctx.state.webhook.payload
+  
+      require('./models/store')
+      const storeModel = mongoose.model('Store')
+
+      const store = await storeModel.findOne({ url: `https://${ctx.state.webhook.domain}` })
+  
+      require("./models/bundles");
+      const bundleModel = mongoose.model("Bundle");
+
+      await bundleModel.findOne({ "SourceProduct.Id": payload.id }, (err, res) => {
+        if (res) {
+          return ;
+        }
+      })
+
+      const products = await fetch(`https://${ctx.state.webhook.domain}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type`, {
+          method: 'GET',
+          headers: {
+              'Content-Type': 'application/json',
+              "X-Shopify-Access-Token": store.accessToken,
+          }
+      })
+
+      const productsJson = await products.json();
+      var chooseFrom = await productsJson.products
+      var filteredProducts = await chooseFrom.filter(function(value, index, arr){ return value.id !== ctx.state.webhook.payload.id;})
+
+      function random(mn, mx) {  
+        return Math.random() * (mx - mn) + mn;  
+      }  
+
+      const randomProd = Math.floor(random(0, filteredProducts.length))
+
+      choosenProduct = filteredProducts[randomProd]
+      let FP_image
+      let SP_image
+
+      if (choosenProduct["image"] != null) { 
+        FP_image = choosenProduct["image"]["src"] 
+      } else {
+        FP_image = "https://cynthiarenee.com/wp-content/uploads/2018/11/placeholder-product-image.png"
+      }
+
+      if (ctx.state.webhook.payload["image"] != null) { 
+        SP_image = ctx.state.webhook.payload["image"]["src"] 
+      } else {
+        SP_image = "https://cynthiarenee.com/wp-content/uploads/2018/11/placeholder-product-image.png"
+      }
+
+      var bundleInstance = new bundleModel({
+        "SourceProduct": {
+        "Id": ctx.state.webhook.payload.id,
+        "Title": ctx.state.webhook.payload.title,
+        "ImageSrc": SP_image
+        },
+        "RecommendedProduct": {
+        "Id": choosenProduct.id,
+        "Title": choosenProduct.title,
+        "ImageSrc": FP_image
+        },
+        "NewRecommendedProduct": {
+        "Id": "None",
+        "Title": "None",
+        "ImageSrc": "None"
+        },
+        "SelectedProduct": {
+        "Id": choosenProduct.id,
+        "Title": choosenProduct.title,
+        "ImageSrc": FP_image
+        },
+        "ChoosenBy": "RandomProduct",
+        "RelateID": `Random`,
+        "Discount": 5
+      })
+
+      await bundleInstance.save(async function(err, doc) {
+        if (err) return console.error(err)
+        console.log("New Bundle Created Because of New product data --> ", doc.SourceProduct)
+
+        await storeModel.findOneAndUpdate(
+          { _id: store._id },
+          { $push: { Bundles: doc._id }},
+          function (error, success) {
+            if (error) {
+                console.log(error);
+            } else {
+                console.log("Success.");
+            }
+          });
+      })
+
+      ctx.response.status = 200;
+      ctx.body = "New Product Created"
+    })
+    .post('/webhooks/products/delete', webhook, async (ctx) => {
+      const payload = ctx.state.webhook.payload
+  
+      require('./models/store')
+      const storeModel = mongoose.model('Store')
+
+      const store = await storeModel.findOne({ url: `https://${ctx.state.webhook.domain}` })
+  
+      require("./models/bundles");
+      const bundleModel = mongoose.model("Bundle");
+
+      const deletedBundle = await bundleModel.findOneAndDelete({ "SourceProduct.Id": `${payload.id}` }, function (err, res) {
+        if (err) console.log(err)
+
+        console.log("Deleted =>", res)
+      })
+
+      const products = await fetch(`https://${ctx.state.webhook.domain}/admin/api/2020-04/products.json?limit=250&fields=id,title,image,product_type`, {
+          method: 'GET',
+          headers: {
+              'Content-Type': 'application/json',
+              "X-Shopify-Access-Token": store.accessToken,
+          }
+      })
+
+      const productsJson = await products.json();
+      var chooseFrom = await productsJson.products
+      
+      const Bundles = await bundleModel.find({
+        '_id': { $in: store.Bundles }
+      })
+
+      Bundles.forEach(async element => {
+        if (parseInt(element.SelectedProduct.Id) === payload.id) {
+            var filteredProds = chooseFrom.filter(function(value, index, arr) { return value.id !== element.SourceProduct.Id })
+
+            function random(mn, mx) {  
+              return Math.random() * (mx - mn) + mn;  
+            }  
+
+            const randomProd = Math.floor(random(0, filteredProds.length))
+
+            const choosenProd = filteredProds[randomProd]
+
+            let SP_image
+            if (choosenProd["image"] != null) { 
+                SP_image = choosenProd["image"]["src"]
+            } else {
+                SP_image = "https://cynthiarenee.com/wp-content/uploads/2018/11/placeholder-product-image.png"
+            }
+
+            const updateBundle = await bundleModel.findByIdAndUpdate(element._id, {$set: { "SelectedProduct": {
+              "Id": choosenProd.id,
+              "Title": choosenProd.title,
+              "ImageSrc": SP_image
+            }}})
+
+            console.log(updateBundle)
+        }
+      });
+
+      ctx.response.status = 200;
+    })
+    
   
     server.use(graphQLProxy({ version: ApiVersion.April20 }));
   

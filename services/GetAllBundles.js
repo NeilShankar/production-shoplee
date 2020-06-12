@@ -18,11 +18,13 @@ const getAllBundles = async (ctx) => {
     
     async function getBundles() {
         const store = await storeModel.findOne({ url: `https://${ctx.session.shop}` })
-        const bundles = await Promise.all(store.Bundles.map(async (bundle) => {
-            return bundleModel.findById(bundle, (err, res) => {
+        
+        const bundles = await bundleModel.find({
+            '_id': { $in: store.Bundles },
+            function(err, res) {
                 return res
-            })
-        }));
+            }
+        })
 
 
         return bundles
