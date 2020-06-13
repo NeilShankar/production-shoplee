@@ -1031,7 +1031,7 @@ export default function FrequentlyBought() {
             </Link>
           </ListItem>     
            
-          <ListItem button key={"Configurations"} style={{ display: (firstTime === true) ? 'none' : 'flex' }}>
+          <ListItem button key={"Configurations"} >
             <Link href="/bundle-configuration" shallow={true}>
               <ListItemIcon><TuneIcon style={{ color: "white" }} /></ListItemIcon>
             </Link>
@@ -1040,7 +1040,7 @@ export default function FrequentlyBought() {
             </Link>
           </ListItem>     
 
-          <ListItem button key={"Bundles"} style={{ display: (firstTime === true) ? 'none' : 'flex' }}>
+          <ListItem button key={"Bundles"} >
             <Link href="/bundles" shallow={true}>
               <ListItemIcon><AddShoppingCartIcon style={{ color: "white" }} /></ListItemIcon>
             </Link>
