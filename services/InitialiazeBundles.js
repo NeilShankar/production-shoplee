@@ -164,7 +164,8 @@ const InitializeBundles = async (ctx) => {
                     console.log("> Bundle Inserting To Mongo Process Exited with Error: ", err)
                 });
 
-            await storeModel.findOneAndUpdate({ url: `https://${shop}` }, {$set: {"Bundles": bundleMongoArr, "ServiceEnabled": true}})
+            await storeModel.findOneAndUpdate({ url: `https://${shop}` }, {$set: {"Bundles": bundleMongoArr}})
+            await storeModel.findOneAndUpdate({ url:`https://${shop}`, {$set: { "ServiceEnabled": true }})
         } catch (err) {
             console.log("Got Error => ", err)
             return err
