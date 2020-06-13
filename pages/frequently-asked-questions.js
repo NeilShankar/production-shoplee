@@ -651,7 +651,7 @@ export default function FrequentlyBought() {
           </Link>
         </ListItem>       
         <ListItem button key={"FAQ"}>
-          <Link disabled={firstTime} href="/frequently-asked-questions" shallow={true}>
+          <Link  href="/frequently-asked-questions" shallow={true}>
             <ListItemIcon><LiveHelpIcon style={{ color: "white" }} /></ListItemIcon>
           </Link>
           <Link href="/frequently-asked-questions" shallow={true}>
