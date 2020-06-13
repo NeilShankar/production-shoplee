@@ -298,7 +298,8 @@ export default function FrequentlyBought() {
 
   const [previewBody, setPreviewBody] = React.useState({ __html: "<div></div>" })
   const [prevWidth, setPrevWidth] = React.useState(97)
-
+  const [image1, setImage1] = React.useState("https://lh3.googleusercontent.com/proxy/E24zIoXgxltv0itBMfetQ5GsC09m4sy8dgOQU9r1jogAbSEpA8bGLfmS9I-qs0dF2eepBWkdK6VJIsApIwkZg95MD3-fi19pSOD6zcGhCkDweSX3BA0mQEGE8P4OMcuBSKiLPWgryapgoQEI8lcJ_ipl-_5cuKXq")
+  const [image2, setImage2] = React.useState("https://lh3.googleusercontent.com/proxy/E24zIoXgxltv0itBMfetQ5GsC09m4sy8dgOQU9r1jogAbSEpA8bGLfmS9I-qs0dF2eepBWkdK6VJIsApIwkZg95MD3-fi19pSOD6zcGhCkDweSX3BA0mQEGE8P4OMcuBSKiLPWgryapgoQEI8lcJ_ipl-_5cuKXq")
   const [previewData, setPreviewData] = React.useState({ 
     title: "Frequently Bought Products",
     titleColor: "#000",
@@ -370,6 +371,17 @@ export default function FrequentlyBought() {
   React.useEffect(() => {
     if (loaded === true) {
       localStorage.setItem('PreviewRes', JSON.stringify(res.data))
+      if (res.data.products[0].image === null){
+        setImage1("https://lh3.googleusercontent.com/proxy/E24zIoXgxltv0itBMfetQ5GsC09m4sy8dgOQU9r1jogAbSEpA8bGLfmS9I-qs0dF2eepBWkdK6VJIsApIwkZg95MD3-fi19pSOD6zcGhCkDweSX3BA0mQEGE8P4OMcuBSKiLPWgryapgoQEI8lcJ_ipl-_5cuKXq")
+      } else {
+        setImage1(res.data.products[0].image.src)
+      }
+
+      if (res.data.products[1].image === null){
+        setImage2("https://lh3.googleusercontent.com/proxy/E24zIoXgxltv0itBMfetQ5GsC09m4sy8dgOQU9r1jogAbSEpA8bGLfmS9I-qs0dF2eepBWkdK6VJIsApIwkZg95MD3-fi19pSOD6zcGhCkDweSX3BA0mQEGE8P4OMcuBSKiLPWgryapgoQEI8lcJ_ipl-_5cuKXq")
+      } else {
+        setImage2(res.data.products[1].image.src)
+      }
     }
   }, [res])
 
@@ -386,15 +398,19 @@ export default function FrequentlyBought() {
       GetProductsLive({
         method: "GET"
       }).then(async (res) => {
-        setPreviewRes({ data: await res.data })
-        localStorage.setItem('PreviewRes', JSON.stringify(res.data))
+        if (res.data.length) {
+          setPreviewRes({ data: await res.data })
+          localStorage.setItem('PreviewRes', JSON.stringify(res.data))
+        }
         setLoaded(true)
         setInterval(() => {
           GetProductsLive({
             method: "GET"
           }).then(async (res) => {
-            setPreviewRes({ data: await res.data })
-            localStorage.setItem('PreviewRes', JSON.stringify(res.data))
+            if (res.data.length) {
+              setPreviewRes({ data: await res.data })
+              localStorage.setItem('PreviewRes', JSON.stringify(res.data))
+            }
             setLoaded(true)
           })
         }, 10000)
@@ -406,8 +422,10 @@ export default function FrequentlyBought() {
         GetProductsLive({
           method: "GET"
         }).then(async (res) => {
-          setPreviewRes({ data: await res.data })
-          localStorage.setItem('PreviewRes', JSON.stringify(res.data))
+          if (res.data.length) {
+            setPreviewRes({ data: await res.data })
+            localStorage.setItem('PreviewRes', JSON.stringify(res.data))
+          }
           setLoaded(true)
         })
       }, 10000)
@@ -484,7 +502,7 @@ export default function FrequentlyBought() {
         <div class="shopLee_triple">
         <div class="shopLee_sideByside shopLee_product">
         <a href='/products/${res.data.products[0].handle}'>
-        <img class="shopLee_productFirstImage" src='${res.data.products[0].image.src}' />
+        <img class="shopLee_productFirstImage" src='${image1}' />
           </a>
           </div>
         <div class="shopLee_sideBysideIcon shopLee_icon">
@@ -492,7 +510,7 @@ export default function FrequentlyBought() {
           </div>
         <div class="shopLee_sideByside shopLee_product">
         <a href='/products/${res.data.products[1].handle}'>
-        <img class="shopLee_productSecondImage" src='${res.data.products[1].image.src}' />
+        <img class="shopLee_productSecondImage" src='${image2}' />
           </a>
           </div>
         <br style="clear: left;" />
@@ -594,11 +612,12 @@ export default function FrequentlyBought() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap>
-            Bundle Display Configurations
+            Bundle Configuration
           </Typography>
           <IconButton style={{"position":"absolute","right":"33px","fontSize":"2.5em"}} aria-controls="simple-menu" aria-haspopup="true" onClick={handleClickUser}>
-           <AccountCircleRoundedIcon style={{ color: "black" }} />
+           <AccountCircleRoundedIcon style={{ color: "white" }} />
           </IconButton>
+          {/* <Typography style={{"position":"absolute","right":"33px","fontSize":".6em"}} variant="h6"><b>{user.name}</b></Typography> */}
           <Menu
           id="simple-menu"
           anchorEl={anchorEl}
@@ -607,12 +626,13 @@ export default function FrequentlyBought() {
           onClose={handleCloseUser}
           >
           <MenuItem onClick={handleCloseUser}><Link href="/settings" shallow={true}>Account</Link></MenuItem>
-          <MenuItem onClick={handleCloseUser}><Link href="/" shallow={true}>Dashboard</Link></MenuItem>
+          <MenuItem onClick={handleCloseUser}><Link href="/dashboard" shallow={true}>Dashboard</Link></MenuItem>
           <MenuItem onClick={handleCloseUser}><Link href="/bundle-configuration" shallow={true}>Configure</Link></MenuItem>
           <MenuItem onClick={handleCloseUser}><Link href="/bundles" shallow={true}>View Bundles</Link></MenuItem>
           </Menu>
           {/* pagename */}
         </Toolbar>
+        
       </AppBar>
       <Drawer
         variant="permanent"
@@ -637,18 +657,20 @@ export default function FrequentlyBought() {
             {theme.direction === 'rtl' ? <ChevronRightIcon style={{ color: "white" }}/> : <ChevronLeftIcon style={{ color: "white" }}/>}
           </IconButton>
         </div>
+        <br />
+        <Typography variant="h5" style={{ paddingLeft: "10px", display: ((open === true) ? 'block' : 'none'), fontSize: ".8em", fontWeight: "bold" }}>Main</Typography>
         <Divider />
         <List>
         <ListItem button key={"Dashboard"}>
-            <Link href="/" shallow={true}>
+            <Link href="/dashboard" shallow={true}>
               <ListItemIcon><AssessmentIcon style={{ color: "white" }} /></ListItemIcon>
             </Link>
-            <Link href="/" shallow={true}>
+            <Link href="/dashboard" shallow={true}>
               <ListItemText primary={"Dashboard"} />
             </Link>
           </ListItem>     
            
-          <ListItem button key={"Configurations"}>
+          <ListItem button key={"Configurations"} style={{ display: (firstTime === true) ? 'none' : 'flex' }}>
             <Link href="/bundle-configuration" shallow={true}>
               <ListItemIcon><TuneIcon style={{ color: "white" }} /></ListItemIcon>
             </Link>
@@ -657,7 +679,7 @@ export default function FrequentlyBought() {
             </Link>
           </ListItem>     
 
-          <ListItem button key={"Bundles"}>
+          <ListItem button key={"Bundles"} style={{ display: (firstTime === true) ? 'none' : 'flex' }}>
             <Link href="/bundles" shallow={true}>
               <ListItemIcon><AddShoppingCartIcon style={{ color: "white" }} /></ListItemIcon>
             </Link>
@@ -666,6 +688,8 @@ export default function FrequentlyBought() {
             </Link>
           </ListItem>     
         </List>
+        <br />
+        <Typography variant="h5" style={{ paddingLeft: "10px", display: ((open === true) ? 'block' : 'none'), fontSize: ".8em", fontWeight: "bold" }}>Info</Typography>
         <Divider />
         <List>
         <ListItem button key={"Settings"}>
@@ -675,9 +699,9 @@ export default function FrequentlyBought() {
           <Link href="/settings" shallow={true}>
             <ListItemText primary={"Settings"} />
           </Link>
-        </ListItem>    
+        </ListItem>       
         <ListItem button key={"FAQ"}>
-          <Link href="/frequently-asked-questions" shallow={true}>
+          <Link disabled={firstTime} href="/frequently-asked-questions" shallow={true}>
             <ListItemIcon><LiveHelpIcon style={{ color: "white" }} /></ListItemIcon>
           </Link>
           <Link href="/frequently-asked-questions" shallow={true}>
@@ -685,6 +709,7 @@ export default function FrequentlyBought() {
           </Link>
         </ListItem>        
         </List>
+      <a href={process.env.REACT_APP_SHOPIFYAPPURL}><img style={{ position: absolute, bottom: 0 }} src="https://cdn.shopify.com/s/files/1/0278/4611/5389/t/1/assets/We_Promise_It_Won_t_Take_More_Than_2_Minutes_To_Leave_a_Review.png?v=1592048359" alt="" /></a>
       </Drawer>
       <main className={classes.content}>
         <div className={classes.toolbar} />       
@@ -824,7 +849,7 @@ export default function FrequentlyBought() {
           <Paper elevation={20} style={{"padding":"2em","textAlign":"center","margin":"0 17%"}}>
             <Typography variant="h5">Support Our App On Shopify App Store!</Typography>
             <Typography variant="caption">Your support would mean alot to us, so could you please place a review for our app at Shopify App Store? If you need any other kind of support from our side, we are always ready to help!</Typography>
-            <br/><br/><Button style={{"background":"black","color":"white"}} variant="contained" >Leave A Review</Button>
+            <br/><br/><Button style={{"background":"black","color":"white"}} variant="contained" ><a style={{ color: "white" }} href={process.env.REACT_APP_SHOPIFYAPPURL}>Leave A Review</a></Button>
           </Paper>
         </Grid>
         <br></br><br></br>

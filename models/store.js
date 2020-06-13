@@ -46,7 +46,8 @@ const schema = new Schema({
      DiscountCodes: Array,
      UpdatingEnabled: Boolean,
      ServiceEnabled: Boolean,
-     JobInfo: String
+     UpdaterJobInfo: String,
+     SalesJobInfo: String
 });
 
 const store = mongoose.model('Store', schema)

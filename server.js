@@ -4,6 +4,7 @@ const Koa = require('koa');
 
 const next = require('next');
 const { default: createShopifyAuth } = require('@shopify/koa-shopify-auth');
+var ObjectId = require('mongoose').Types.ObjectId;
 const { verifyRequest } = require('@shopify/koa-shopify-auth');
 const session = require('koa-session');
 const Sentry = require('@sentry/node');
@@ -140,6 +141,14 @@ function start() {
     })
 
     const Agenda = require('agenda');
+
+    router.get('/', async (ctx) => {
+      await app.render(ctx.req, ctx.res, '/installation', ctx.query);
+      if (ctx.session.shop !== null) {
+        ctx.redirect('/dashboard')
+      }
+      ctx.respond = false;
+    })
   
     const agenda = new Agenda({
         db: {address: process.env.MONGO_DB_URL, collection: 'Jobs'},
@@ -264,84 +273,90 @@ function start() {
   
               console.log("Pre-Initiliazed, so not doing more work...")          
             } else {
-              // Saving Store Data to MongoDB
-              const storeData = storeModel({
-                url: `https://${shop}`,
-                domain: `https://${results.shop.domain}`,
-                accessToken: accessToken,
-                FreeShipEnabled: false,
-                FreeShippingThreshold: 0,
-                BundleConfigs: {
-                  title: "Frequently Bought Products",
-                  titleColor: "#000",
-                  buttonText: "Add Bundle To Cart",
-                  buttonBackground: "#000",
-                  buttonTextColor: "#fff",
-                  buttonBorderColor: "#fff",
-                  buttonHoverBackground: "#fff",
-                  buttonHoverTextColor: "#000",
-                  buttonHoverBorderColor: "#000",
-                  Enabled: true
-                }, 
-                Metrics: {
-                  ThisMonth: {
-                    Sales: 0,
-                    AddToCarts: 0,
-                    Views: 0,
-                    Currency: Currency
-                  },
-                  LastMonth: {
-                    Sales: 0,
-                    AddToCarts: 0,
-                    Views: 0,
-                    Currency: Currency
-                  },
-                  AllTime: {
-                    Sales: 0,
-                    AddToCarts: 0,
-                    Views: 0,
-                  }
-                },
-                ShopInfo: {
-                  UserName: ShopUser,
-                  ShopName: ShopName
-                },
-                UpdatingEnabled: true,
-                ServiceEnabled: false,
-                JobInfo: `updaterFor${shop}`
-              })
-  
-              storeData.save(async function(err, doc) {
-                if (err) return console.error(err);
-                console.log("Document saved succussfully!");
+              let SalesJobInfo
+              let UpdaterJobInfo
+
+              agenda.define('update products', {priority: 'high', concurrency: 10}, async (job, done) => {
+                const {shopData} = job.attrs.data;
+                UpdateRecommendedProducts(shopData).then(() => done)
               });
-  
+    
+              (async function() {
+                const dailyUpdater = agenda.create('update products', {shopData: `${shop}`});
+                await agenda.start();
+                await dailyUpdater.repeatEvery('0 0 * * *', {skipImmediate: true}).save();
+                UpdaterJobInfo = dailyUpdater.attrs._id
+              })();
+    
+              agenda.define('update sales', {priority: 'high', concurrency: 10}, async (job, done) => {
+                const {shopData} = job.attrs.data;
+                UpdateMetricsMonthly(shopData).then(() => done)
+              });
+    
+              (async function() {
+                const salesUpdate = agenda.create('update sales', {shopData: `${shop}`});
+                await agenda.start();
+                await salesUpdate.repeatEvery('0 0 1 * *', {skipImmediate: true}).save();
+                SalesJobInfo = salesUpdate.attrs._id
+
+                const storeData = storeModel({
+                  url: `https://${shop}`,
+                  domain: `https://${results.shop.domain}`,
+                  accessToken: accessToken,
+                  FreeShipEnabled: false,
+                  FreeShippingThreshold: 0,
+                  BundleConfigs: {
+                    title: "Frequently Bought Products",
+                    titleColor: "#000",
+                    buttonText: "Add Bundle To Cart",
+                    buttonBackground: "#000",
+                    buttonTextColor: "#fff",
+                    buttonBorderColor: "#fff",
+                    buttonHoverBackground: "#fff",
+                    buttonHoverTextColor: "#000",
+                    buttonHoverBorderColor: "#000",
+                    Enabled: true
+                  }, 
+                  Metrics: {
+                    ThisMonth: {
+                      Sales: 0,
+                      AddToCarts: 0,
+                      Views: 0,
+                      Currency: Currency
+                    },
+                    LastMonth: {
+                      Sales: 0,
+                      AddToCarts: 0,
+                      Views: 0,
+                      Currency: Currency
+                    },
+                    AllTime: {
+                      Sales: 0,
+                      AddToCarts: 0,
+                      Views: 0,
+                    }
+                  },
+                  ShopInfo: {
+                    UserName: ShopUser,
+                    ShopName: ShopName
+                  },
+                  UpdatingEnabled: true,
+                  ServiceEnabled: false,
+                  UpdaterJobInfo: `${UpdaterJobInfo}`,
+                  SalesJobInfo: `${SalesJobInfo}`
+                })
+    
+                storeData.save(async function(err, doc) {
+                  if (err) return console.error(err);
+                  console.log("Document saved succussfully!");
+                });
+              })();
+
+              // Saving Store Data to MongoDB  
               getThemes(`https://${shop}`, accessToken)
               InitializeBundles(ctx)
             }
           })
-  
-          agenda.define('update products', {priority: 'high'}, async job => {
-            const {shopData, upJobId} = job.attrs.data
-            job.unique({ 'data.id': `updatesFor${shop}` });
-            UpdateRecommendedProducts(shopData)
-          });
-          
-          (async function() {
-            await agenda.start()
-            await agenda.every('0 0 * * *', 'update products', {shopData: `${shop}`, upJobId: `updaterFor${shop}`}, { skipImmediate: true }, { timezone: "UTC"});
-          })();
-
-          agenda.define('update sales', {priority: 'medium'}, async job => {
-            const {shopData, upJobId} = job.attrs.data
-            job.unique({ 'data.id': `salesFor${shop}` });
-            UpdateMetricsMonthly(shopData)
-          });
-          
-          (async function() {
-            await agenda.start()
-            await agenda.every('0 0 1 * *', 'update sales', {shopData: `${shop}`, upJobId: `salesFor${shop}`}, { skipImmediate: true }, { timezone: "UTC"});
-          })();
   
           var ScriptData = JSON.stringify({
             "script_tag": {
@@ -473,7 +488,6 @@ function start() {
     })
     .post('/api/saveBundleInfo', updateBundleInfo)
     .get('/api/getBundleInfo', getBundleInfo)
-    .get('/api/updaterTest', UpdateRecommendedProducts)
     .get('/api/getProducts', getProducts)
     .get('/api/allProducts', GetAllProduct)
     .get('/api/checkFirstTime', checkFirstTime)
@@ -607,6 +621,24 @@ function start() {
       var store = await storeModel.findOne({ url: `https://${payload.shop_domain}` }, async (err, res) => {
         BundleArr = [...res.Bundles]
       })
+
+      var jobStore = await storeModel.findOne({ url: `https://${payload.shop_domain}` })
+
+      var q = {
+        _id: ObjectId(await jobStore.UpdaterJobInfo)
+      };
+
+      var q2 = {
+        _id: ObjectId(await jobStore.SalesJobInfo)
+      };
+      
+      agenda.cancel(q, function(err, numRemoved) {
+          if(err) return res.status(500).send(err);
+      });
+
+      agenda.cancel(q2, function(err, numRemoved) {
+        if(err) return res.status(500).send(err);
+      });
   
       var deleteStore = await storeModel.deleteOne(store._id)
   

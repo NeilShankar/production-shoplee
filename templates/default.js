@@ -249,13 +249,28 @@ const getThemes = async function getThemes(ShopURI, accessT) {
                   console.log("Sorry, your browser does not support Web Storage...")
              }
           }
+
+          let image1
+            let image2
+        
+            if (data.products[0].image === null){
+            	image1 = "https://lh3.googleusercontent.com/proxy/E24zIoXgxltv0itBMfetQ5GsC09m4sy8dgOQU9r1jogAbSEpA8bGLfmS9I-qs0dF2eepBWkdK6VJIsApIwkZg95MD3-fi19pSOD6zcGhCkDweSX3BA0mQEGE8P4OMcuBSKiLPWgryapgoQEI8lcJ_ipl-_5cuKXq"
+            } else {
+              	image1 = data.products[0].image.src
+            }
+        
+        	if (data.products[1].image === null){
+            	image2 = "https://lh3.googleusercontent.com/proxy/E24zIoXgxltv0itBMfetQ5GsC09m4sy8dgOQU9r1jogAbSEpA8bGLfmS9I-qs0dF2eepBWkdK6VJIsApIwkZg95MD3-fi19pSOD6zcGhCkDweSX3BA0mQEGE8P4OMcuBSKiLPWgryapgoQEI8lcJ_ipl-_5cuKXq"
+            } else {
+              	image2 = data.products[1].image.src
+            }
         
           document.getElementById("shopLee_snippet").innerHTML = \`
               <h3 class='shopLee_title'>\${BundleConfigs.title}</h3>
               <div class="shopLee_triple">
               <div class="shopLee_sideByside shopLee_product">
               <a href='/products/\${data.products[0].handle}'>
-              <img class="shopLee_productFirstImage" src='\${data.products[0].image.src}' />
+              <img class="shopLee_productFirstImage" src='\${image1}' />
                 </a>
                 </div>
               <div class="shopLee_sideBysideIcon shopLee_icon">
@@ -263,7 +278,7 @@ const getThemes = async function getThemes(ShopURI, accessT) {
                 </div>
               <div class="shopLee_sideByside shopLee_product">
               <a href='/products/\${data.products[1].handle}'>
-              <img class="shopLee_productSecondImage" src='\${data.products[1].image.src}' />
+              <img class="shopLee_productSecondImage" src='\${image2}' />
                 </a>
                 </div>
               <br style="clear: left;" />

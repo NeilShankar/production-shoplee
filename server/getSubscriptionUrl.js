@@ -3,7 +3,7 @@ const getSubscriptionUrl = async (ctx, accessToken, shop) => {
       query: `mutation {
         appSubscriptionCreate(
             name: "Basic Plan"
-            returnUrl: "${process.env.HOST}"
+            returnUrl: "${process.env.HOST}/dashboard"
             trialDays: 14
             test: true
             lineItems: [

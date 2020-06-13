@@ -183,10 +183,10 @@ async function UpdateRecommendedProducts(shopURL) {
     // Rate Limiting Stuff
     const findBundlesMatching = stopcock(FindMatch, { bucketSize: 1, interval: 1000 });
 
-    bundleMatch()
+    await bundleMatch()
 
     // Main Function
-    function bundleMatch() {
+    async function bundleMatch() {
         console.log("Started Daily Updater")
         bundleArr[0].forEach(element => {
             findBundlesMatching(element).then((res) => {
@@ -196,6 +196,8 @@ async function UpdateRecommendedProducts(shopURL) {
             })
         });
     }
+
+    return "Done"
 }
 
 module.exports = UpdateRecommendedProducts
