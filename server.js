@@ -333,7 +333,6 @@ function start() {
                     ShopName: ShopName
                   },
                   UpdatingEnabled: true,
-                  ServiceEnabled: false,
                   UpdaterJobInfo: `${UpdaterJobInfo}`,
                   SalesJobInfo: `${SalesJobInfo}`
                 })
