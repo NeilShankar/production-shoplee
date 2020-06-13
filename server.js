@@ -141,14 +141,6 @@ function start() {
     })
 
     const Agenda = require('agenda');
-
-    router.get('/', async (ctx) => {
-      await app.render(ctx.req, ctx.res, '/installation', ctx.query);
-      if (ctx.session.shop !== null) {
-        ctx.redirect('/dashboard')
-      }
-      ctx.respond = false;
-    })
   
     const agenda = new Agenda({
         db: {address: process.env.MONGO_DB_URL, collection: 'Jobs'},
