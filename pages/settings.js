@@ -656,7 +656,7 @@ export default function FrequentlyBought() {
           </Link>
         </ListItem>        
         </List>
-      <a href={process.env.REACT_APP_SHOPIFYAPPURL}><img style={{ position: absolute, bottom: 0 }} src="https://cdn.shopify.com/s/files/1/0278/4611/5389/t/1/assets/We_Promise_It_Won_t_Take_More_Than_2_Minutes_To_Leave_a_Review.png?v=1592048359" alt="" /></a>
+      <a href={process.env.REACT_APP_SHOPIFYAPPURL}><img style={{ position: "absolute", bottom: 0 }} src="https://cdn.shopify.com/s/files/1/0278/4611/5389/t/1/assets/We_Promise_It_Won_t_Take_More_Than_2_Minutes_To_Leave_a_Review.png?v=1592048359" alt="" /></a>
       </Drawer>
       <main className={classes.content}>
         <div className={classes.toolbar} />       
